@@ -116,14 +116,13 @@
                     <h2 id="modal-name">اسم الوجبة</h2>
                     <p id="modal-desc" class="product-description">وصف الوجبة بالتفصيل هنا...</p>
 
-                    <div class="product-price-section">
-                        <span class="price-label">السعر:</span>
-                        <span id="modal-price" class="price-value">0</span> <span>ج.م</span>
+                    <div id="price-options-container" class="price-options">
+                        <!-- الخيارات هتنزل هنا بالـ JS -->
                     </div>
 
                     <div class="modal-actions">
                         <button id="modal-add-btn" class="add-to-cart-btn-large">
-                            <i class="fas fa-cart-plus"></i> أضف للسلة الآن
+                            أضف للسلة <span id="modal-price-display">0</span> ج.م
                         </button>
                     </div>
                 </div>
@@ -295,24 +294,47 @@
 
         // Open product modal
         function openProductModal(productName) {
-            let products = JSON.parse(localStorage.getItem('products')) || [];
+            const products = JSON.parse(localStorage.getItem('products')) || [];
             const product = products.find(p => p.name === productName);
 
             if (product) {
                 document.getElementById('modal-name').innerText = product.name;
                 document.getElementById('modal-desc').innerText = product.description;
-                document.getElementById('modal-price').innerText = product.price;
-                document.getElementById('modal-img').src = product.img || "fried-chicken.jpg"; // هنا تضع صورة المنتج الحقيقية
+                document.getElementById('modal-img').src = product.img;
 
-                // تظبيط زرار الإضافة للسلة داخل المودال
-                document.getElementById('modal-add-btn').onclick = function(e) {
-                    e.stopPropagation(); // منع إغلاق المودال بالخطأ
-                    addToCart(product.name, parseInt(product.price));
+                const optionsDiv = document.getElementById('price-options-container');
+                optionsDiv.innerHTML = ""; // مسح القديم عشان ميظهرش مكرر
+
+                // هنا السر: بنلف على كل الأحجام اللي إنت ضفتها في الأدمن
+                product.prices.forEach((item, index) => {
+                    optionsDiv.innerHTML += `
+                        <label class="size-option" style="display: block; margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; cursor: pointer;">
+                            <input type="radio" name="meal-size" value="${item.price}"
+                                   data-size="${item.size}" ${index === 0 ? 'checked' : ''}
+                                   onchange="updateModalPrice(this.value)" style="margin-left: 10px;">
+                            <span>${item.size} (${item.price} ج.م)</span>
+                        </label>
+                    `;
+                });
+
+                // تحديث السعر الابتدائي في الزرار
+                updateModalPrice(product.prices[0].price);
+
+                // برمجة زرار "أضف للسلة"
+                document.getElementById('modal-add-btn').onclick = () => {
+                    const selected = document.querySelector('input[name="meal-size"]:checked');
+                    const finalName = `${product.name} - الحجم: ${selected.getAttribute('data-size')}`;
+                    addToCart(finalName, parseInt(selected.value));
                     closeProductModal();
                 };
 
                 document.getElementById('product-modal').style.display = 'flex';
             }
+        }
+
+        // دالة لتحديث السعر المكتوب جوه الزرار الأحمر
+        function updateModalPrice(price) {
+            document.getElementById('modal-price-display').innerText = price;
         }
 
         // Close product modal
