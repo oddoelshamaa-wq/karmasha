@@ -103,7 +103,7 @@
     <!-- مودال تفاصيل المنتج -->
     <div id="product-modal" class="modal blur-bg">
         <div class="product-details-container animate-pop">
-            <span class="close-modal" onclick="closeProductModal()">&times;</span>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
 
             <div class="product-flex">
                 <!-- جانب الصورة -->
@@ -257,50 +257,51 @@
         }
 
         // دالة عرض المنتجات لقسم معين
-        function renderProductsForCategory(catName) {
+        function renderProductsForCategory(c) {
             const container = document.getElementById('productsContainer');
             container.innerHTML = '';
 
-            let products = JSON.parse(localStorage.getItem('products')) || [];
+            // إصلاح 1: التأكد إن المنتجات اتحملت أصلاً
+            if(!window.allProducts) {
+                container.innerHTML = '<div style="text-align:center; padding:20px;">جاري تحميل المنتجات...</div>';
+                return;
+            }
 
-            // فلترة المنتجات بناءً على القسم (مع التأكد من حذف المسافات الزائدة)
-            const categoryProducts = products.filter(p => p.category.trim() === catName.trim());
+            const fil = window.allProducts.filter(p => p.category == c);
 
-            if (categoryProducts.length === 0) {
-                container.innerHTML = `<p style="text-align:center; padding:50px;">قريباً.. سيتم إضافة وجبات في قسم ${catName}</p>`;
+            if(!fil.length) {
+                container.innerHTML='<p style="text-align:center; padding:20px;">لا توجد منتجات في هذا القسم حالياً</p>';
                 return;
             }
 
             const grid = document.createElement('div');
-            grid.className = 'products-grid fade-in';
+            grid.className='products-grid';
 
-            categoryProducts.forEach(product => {
-                const item = `
-                    <div class="food-card" onclick="openProductModal('${product.name}')">
-                        <div class="food-image">
-                            <img src="${product.img || 'default.jpg'}" alt="${product.name}">
-                        </div>
-                        <div class="food-details">
-                            <h3>${product.name}</h3>
-                            <p>${product.description.substring(0, 40)}...</p>
+            fil.forEach(p => {
+                // إصلاح 2 (سبب المشكلة): التأكد إن المنتج له سعر وصورة قبل العرض
+                const price = (p.prices && p.prices.length > 0) ? p.prices[0].price : 'غير محدد';
+                const imgSrc = p.img ? p.img : 'https://via.placeholder.com/150';
 
-                            <!-- التعديل هنا 👇 -->
-                            <div class="price-tag">
-                                يبدأ من ${product.prices[0].price} ج.م
-                            </div>
+                const pStr = encodeURIComponent(JSON.stringify(p));
 
-                            <button class="view-btn">تفاصيل الوجبة</button>
-                        </div>
-                    </div>`;
-                grid.innerHTML += item;
+                grid.innerHTML+=`
+                <div class="food-card" onclick="openModal('${pStr}')">
+                    <div class="food-image">
+                        <img src="${imgSrc}" onerror="this.src='https://via.placeholder.com/150'">
+                    </div>
+                    <div class="food-details">
+                        <h3>${p.name}</h3>
+                        <span class="price-tag">${price} ج</span>
+                        <button class="view-btn">اطلب</button>
+                    </div>
+                </div>`;
             });
             container.appendChild(grid);
         }
 
         // Open product modal
-        function openProductModal(productName) {
-            const products = JSON.parse(localStorage.getItem('products')) || [];
-            const product = products.find(p => p.name === productName);
+        function openModal(pStr) {
+            const product = JSON.parse(decodeURIComponent(pStr));
 
             if (product) {
                 document.getElementById('modal-name').innerText = product.name;
@@ -330,7 +331,7 @@
                     const selected = document.querySelector('input[name="meal-size"]:checked');
                     const finalName = `${product.name} - الحجم: ${selected.getAttribute('data-size')}`;
                     addToCart(finalName, parseInt(selected.value));
-                    closeProductModal();
+                    closeModal();
                 };
 
                 document.getElementById('product-modal').style.display = 'flex';
@@ -343,7 +344,7 @@
         }
 
         // Close product modal
-        function closeProductModal() {
+        function closeModal() {
             document.getElementById('product-modal').style.display = 'none';
         }
 
@@ -590,6 +591,8 @@
         window.onload = function() {
             updateUIForUser();
             loadCategories();
+            window.allProducts = JSON.parse(localStorage.getItem('products')) || [];
+            window.logger = setup_logger();
         };
 
         // مراقبة الأقسام وتحديث القائمة تلقائياً
