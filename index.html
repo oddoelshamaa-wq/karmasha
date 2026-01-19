@@ -247,32 +247,43 @@
             };
         }
 
-        // Render products for a specific category
+        // دالة للتبديل بين الأقسام وتلوين الزر المختار
+        function selectCategory(element, catName) {
+            // إزالة اللون الأحمر من كل الأزرار
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // إضافة اللون الأحمر للزر الذي ضغطت عليه
+            element.classList.add('active');
+            // عرض المنتجات
+            renderProductsForCategory(catName);
+        }
+
+        // دالة عرض المنتجات لقسم معين
         function renderProductsForCategory(catName) {
             const container = document.getElementById('productsContainer');
             container.innerHTML = '';
 
             let products = JSON.parse(localStorage.getItem('products')) || [];
-            const categoryProducts = products.filter(product => product.category === catName);
 
-            const title = document.createElement('h2');
-            title.className = 'section-title fade-in';
-            title.textContent = catName;
-            container.appendChild(title);
+            // فلترة المنتجات بناءً على القسم (مع التأكد من حذف المسافات الزائدة)
+            const categoryProducts = products.filter(p => p.category.trim() === catName.trim());
+
+            if (categoryProducts.length === 0) {
+                container.innerHTML = `<p style="text-align:center; padding:50px;">قريباً.. سيتم إضافة وجبات في قسم ${catName}</p>`;
+                return;
+            }
 
             const grid = document.createElement('div');
             grid.className = 'products-grid fade-in';
 
             categoryProducts.forEach(product => {
-                // جعل الكارت كله قابل للضغط لفتح التفاصيل
                 const item = `
                     <div class="food-card" onclick="openProductModal('${product.name}')">
                         <div class="food-image">
-                            <img src="${product.img}" alt="${product.name}" onerror="this.src='fried-chicken.jpg'">
+                            <img src="${product.img || 'fried-chicken.jpg'}" alt="${product.name}" onerror="this.src='fried-chicken.jpg'">
                         </div>
                         <div class="food-details">
                             <h3>${product.name}</h3>
-                            <p>${product.description.substring(0, 40)}...</p>
+                            <p>${product.description.substring(0, 50)}...</p>
                             <div class="price-tag">${product.price} ج.م</div>
                             <button class="view-btn">تفاصيل الوجبة</button>
                         </div>
@@ -309,26 +320,27 @@
             document.getElementById('product-modal').style.display = 'none';
         }
 
+        // دالة لتحميل الأقسام في الشريط العلوي (تحت الهيرو)
         function loadCategories() {
             const navContainer = document.getElementById('dynamicCategories');
-
-            // 1. اقرأ الأقسام اللي الأدمن خزنها
+            // جلب الأقسام من المفتاح الموحد
             let savedCategories = JSON.parse(localStorage.getItem('karmashaCategories')) || ["فرايد تشيكن", "تشيكن ستربس"];
 
-            // 2. امسح أي حاجة قديمة في الشريط
             navContainer.innerHTML = "";
-
-            // 3. اعمل "Loop" على كل قسم وارسمه كـ Link
             savedCategories.forEach((cat, index) => {
-                // لو أول قسم، خليه واخد اللون الأحمر (active)
+                // جعل أول قسم نشط افتراضياً
                 let activeClass = (index === 0) ? "active" : "";
-
                 navContainer.innerHTML += `
-                    <a href="javascript:void(0)" onclick="renderProductsForCategory('${cat}')" class="nav-item ${activeClass}">
+                    <a href="javascript:void(0)" onclick="selectCategory(this, '${cat}')" class="nav-item ${activeClass}">
                         ${cat}
                     </a>
                 `;
             });
+
+            // تحميل منتجات أول قسم تلقائياً عند فتح الصفحة
+            if (savedCategories.length > 0) {
+                renderProductsForCategory(savedCategories[0]);
+            }
         }
 
         function loadProductsByCategory() {
@@ -550,9 +562,7 @@
         // 4. شغل الدالة دي أول ما الصفحة تفتح
         window.onload = function() {
             updateUIForUser();
-            listenToCategories();
-            let savedCategories = JSON.parse(localStorage.getItem('karmashaCategories')) || ["فرايد تشيكن", "تشيكن ستربس"];
-            renderProductsForCategory(savedCategories[0]);
+            loadCategories();
         };
 
         // مراقبة الأقسام وتحديث القائمة تلقائياً
