@@ -141,7 +141,7 @@
     <script type="module">
       // استيراد الدوال اللي محتاجينها
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
       import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
       // بيانات مشروعك (اللي إنت بعتها)
@@ -409,12 +409,12 @@
 
             const orderData = {
                 customerName: name,
-                phone: phone,
-                address: address,
+                customerPhone: phone,
+                customerAddress: address,
                 items: cart, // مصفوفة السلة
                 totalPrice: total,
                 status: "جديد",
-                time: new Date().toLocaleTimeString()
+                createdAt: serverTimestamp()
             };
 
             try {
