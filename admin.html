@@ -224,391 +224,166 @@
         </section>
     </div>
 
-    <!-- تحميل مكتبات فايربيز الأساسية -->
-    <script type="module">
-      // استيراد الدوال اللي محتاجينها
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-      import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-      // بيانات مشروعك
-      const firebaseConfig = {
-        apiKey: "AIzaSyArc3Y--aq-6e8omAbcpm8fZ5BvNcYMtkw",
-        authDomain: "karmasha-bfad3.firebaseapp.com",
-        projectId: "karmasha-bfad3",
-        storageBucket: "karmasha-bfad3.firebasestorage.app",
-        messagingSenderId: "584846393500",
-        appId: "1:584846393500:web:5a58f969f3a66126026d59",
-        measurementId: "G-G518D7LXSS"
-      };
+      <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, deleteDoc, getDocs, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      // تشغيل فايربيز
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      // تصدير الأدوات عشان نستخدمها في باقي الكود
-      window.db = db;
-
-      function listenToOrders() {
-          const q = query(collection(window.db, "orders"), orderBy("createdAt", "desc"));
-
-          onSnapshot(q, (snapshot) => {
-              const newOrdersContainer = document.getElementById('new-orders'); // العمود الأحمر
-              const kitchenOrdersContainer = document.getElementById('kitchen-orders'); // عمود المطبخ
-
-              newOrdersContainer.innerHTML = '';
-              kitchenOrdersContainer.innerHTML = '';
-
-              snapshot.forEach((docSnapshot) => {
-                  const order = docSnapshot.data();
-                  const orderId = docSnapshot.id;
-
-                  // كارت الطلب بتنسيق قرمشة
-                  const orderHtml = `
-                      <div class="order-card">
-                          <div class="card-header">
-                              <span class="order-id">#${orderId.substring(0,5)}</span>
-                              <span class="order-time">${order.createdAt?.toDate().toLocaleTimeString('ar-EG') || 'الآن'}</span>
-                          </div>
-                          <div class="customer-info">
-                              <h4>${order.customerName}</h4>
-                              <p><i class="fas fa-map-marker-alt"></i> ${order.customerAddress}</p>
-                              <p><i class="fas fa-phone"></i> ${order.customerPhone}</p>
-                              <div style="font-size:12px; color:#d2000a; margin-top:5px;">
-                                  ${order.items.map(i => `• ${i.name}`).join('<br>')}
-                              </div>
-                          </div>
-                          <div class="card-footer">
-                              ${order.status === "جديد"
-                                  ? `<button class="details-btn" onclick="moveToKitchen('${orderId}')">قبول الطلب</button>`
-                                  : `<button class="details-btn" style="background:#2e7d32; color:white;">بدأ الطهي</button>`}
-                              <span class="price">${order.totalPrice} ج</span>
-                          </div>
-                      </div>
-                  `;
-
-                  if (order.status === "جديد") {
-                      newOrdersContainer.innerHTML += orderHtml;
-                  } else if (order.status === "في المطبخ") {
-                      kitchenOrdersContainer.innerHTML += orderHtml;
-                  }
-              });
-          });
-      }
-
-      // دالة لنقل الطلب من "جديد" إلى "في المطبخ"
-      window.moveToKitchen = async function(id) {
-          const orderRef = doc(window.db, "orders", id);
-          await updateDoc(orderRef, { status: "في المطبخ" });
-      };
-
-      // دالة رفع الصورة للفايربيز ستوريج
-      async function uploadImage(file) {
-          const storage = getStorage();
-          const storageRef = ref(storage, 'products/' + file.name);
-          await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(storageRef);
-          return url; // هذا اللينك هو ما سنحفظه في Firestore
-      }
-
-      listenToOrders();
-    </script>
-
-<script>
-    // الحصول على جميع أزرار القائمة الجانبية
-    const menuItems = document.querySelectorAll('.side-nav li');
-
-    // الحصول على جميع أقسام المحتوى
-    const sections = document.querySelectorAll('.admin-section');
-
-    // عنوان الصفحة في الهيدر
-    const pageTitle = document.getElementById('current-page-title');
-
-    menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            // 1. إزالة حالة النشاط (active) من كل الأزرار
-            menuItems.forEach(i => i.classList.remove('active'));
-
-            // 2. إضافة حالة النشاط للزر الذي تم الضغط عليه
-            this.classList.add('active');
-
-            // 3. إخفاء كل الأقسام
-            sections.forEach(sec => sec.classList.remove('active'));
-
-            // 4. تحديد أي قسم سيظهر بناءً على النص داخل الزر
-            const text = this.innerText.trim();
-
-            if (text.includes("الطلبات الحية")) {
-                document.getElementById('live-orders-section').classList.add('active');
-                pageTitle.innerText = "⚡ الطلبات الحية";
-            }
-            else if (text.includes("إدارة المنتجات")) {
-                document.getElementById('manage-products-section').classList.add('active');
-                pageTitle.innerText = "📦 إدارة المنيو";
-                updateProductsTable();
-            }
-            else if (text.includes("إدارة الأقسام")) {
-                document.getElementById('manage-categories-section').classList.add('active');
-                pageTitle.innerText = "📂 إدارة الأقسام";
-                displayCategoriesInAdmin();
-            }
-            else if (text.includes("السجل والإحصائيات")) {
-                document.getElementById('records-section').classList.add('active');
-                pageTitle.innerText = "📋 سجل العمليات";
-                loadOrderRecords();
-            }
-            else if (text.includes("إضافة منتج جديد")) {
-                document.getElementById('add-product-section').classList.add('active');
-                pageTitle.innerText = "➕ إضافة وجبة جديدة";
-            }
-            // يمكنك إضافة باقي الشروط هنا للتقارير والموظفين...
-        });
-    });
-
-    // Product management
-    let editingIndex = null;
-    let productBase64Image = "";
-
-    // مراقبة اختيار الصورة وتحويلها
-    document.getElementById('food-img-file').addEventListener('change', function(e) {
-        const reader = new FileReader();
-        reader.onload = () => productBase64Image = reader.result;
-        reader.readAsDataURL(e.target.files[0]);
-    });
-
-    // دالة لإضافة صف جديد تحت بعضه
-    function addPriceRow() {
-        const container = document.getElementById('prices-container');
-        const newRow = document.createElement('div');
-        newRow.className = 'price-row';
-        newRow.innerHTML = `
-            <input type="text" placeholder="الحجم" class="size-input">
-            <input type="number" placeholder="السعر" class="price-input">
-            <button type="button" onclick="this.parentElement.remove()" class="btn-remove">×</button>
-        `;
-        container.appendChild(newRow);
-    }
-
-    // دالة حفظ المنتج
-    async function saveProduct() {
-        const name = document.querySelector('input[placeholder="اسم الوجبة"]').value;
-        const desc = document.querySelector('textarea[placeholder="وصف الوجبة"]').value;
-        const category = document.querySelector('select').value;
-
-        // --- السحر هنا: تجميع البيانات من الصفوف ---
-        const rows = document.querySelectorAll('.price-row');
-        let pricesArray = [];
-
-        rows.forEach(row => {
-            const size = row.querySelector('.size-input').value;
-            const price = row.querySelector('.price-input').value;
-            if (size && price) {
-                pricesArray.push({ size: size, price: parseInt(price) });
-            }
-        });
-
-        if (pricesArray.length === 0) {
-            alert("لازم تضيف حجم وسعر واحد على الأقل!");
-            return;
-        }
-
-        const newProduct = {
-            name: name,
-            description: desc,
-            category: category,
-            img: productBase64Image || 'default.jpg',
-            prices: pricesArray
+        const firebaseConfig = {
+            apiKey: "AIzaSyArc3Y--aq-6e8omAbcpm8fZ5BvNcYMtkw",
+            authDomain: "karmasha-bfad3.firebaseapp.com",
+            projectId: "karmasha-bfad3",
+            storageBucket: "karmasha-bfad3.firebasestorage.app",
+            messagingSenderId: "584846393500",
+            appId: "1:584846393500:web:5a58f969f3a66126026d59",
+            measurementId: "G-G518D7LXSS"
         };
 
-        // حفظ في LocalStorage
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        products.push(newProduct);
-        localStorage.setItem('products', JSON.stringify(products));
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.db = db;
 
-        alert("تم حفظ المنتج بنجاح! 🔥");
-        location.reload();
-    }
-
-    // ربط زرار الحفظ بالدالة
-    document.getElementById('add-food-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveProduct();
-    });
-
-    function updateProductsTable() {
-        const tbody = document.querySelector('#manage-products-section tbody');
-        tbody.innerHTML = '';
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        products.forEach((product, index) => {
-            const row = `<tr>
-                <td>${product.name}</td>
-                <td>${product.price} ج</td>
-                <td>${product.category || 'غير محدد'}</td>
-                <td><span class="status success">متوفر</span></td>
-                <td>
-                    <button class="btn-edit" onclick="editProduct(${index})">تعديل</button>
-                    <button class="btn-edit" style="background: #f44336; margin-left: 5px;" onclick="deleteProduct(${index})">حذف</button>
-                </td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-    }
-
-    function editProduct(index) {
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        const product = products[index];
-        form.querySelector('input[type="text"]').value = product.name;
-        form.querySelector('input[type="number"]').value = product.price;
-        form.querySelector('textarea').value = product.description;
-        form.querySelector('#categorySelect').value = product.category || '';
-        editingIndex = index;
-        submitBtn.textContent = 'تحديث المنتج';
-        // Switch to add section
-        sections.forEach(sec => sec.classList.remove('active'));
-        document.getElementById('add-product-section').classList.add('active');
-        pageTitle.innerText = "✏️ تعديل المنتج";
-    }
-
-    function deleteProduct(index) {
-        if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-            let products = JSON.parse(localStorage.getItem('products')) || [];
-            products.splice(index, 1);
-            localStorage.setItem('products', JSON.stringify(products));
-            updateProductsTable();
-            alert('تم حذف المنتج!');
-        }
-    }
-
-    // 1. مصفوفة الأقسام الافتراضية
-    let categories = JSON.parse(localStorage.getItem('karmashaCategories')) ||
-                     ["فرايد تشيكن", "تشيكن ستربس"];
-
-    // 2. وظيفة لعرض الأقسام في جدول الأدمن
-    function displayCategoriesInAdmin() {
-        const tableBody = document.getElementById('admin-categories-table');
-        if (!tableBody) return; // تأكد إن الجدول موجود
-
-        tableBody.innerHTML = '';
-
-        // جلب الأقسام من المفتاح الموحد اللي بنستخدمه عند المشتري
-        let savedCategories = JSON.parse(localStorage.getItem('karmashaCategories')) || ["فرايد تشيكن", "تشيكن ستربس"];
-
-        savedCategories.forEach((cat, index) => {
-            tableBody.innerHTML += `
-                <tr>
-                    <td>${cat}</td>
-                    <td>
-                        <button onclick="deleteCategory(${index})" class="btn-edit" style="background: #f44336;">حذف</button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    function saveCategory() {
-        let catInput = document.getElementById('categoryInput');
-        let catName = catInput.value.trim();
-
-        if (catName === "") {
-            alert("اكتب اسم القسم الأول!");
-            return;
-        }
-
-        let savedCategories = JSON.parse(localStorage.getItem('karmashaCategories')) || ["فرايد تشيكن", "تشيكن ستربس"];
-        savedCategories.push(catName);
-        
-        // حفظ في المفتاح الموحد
-        localStorage.setItem('karmashaCategories', JSON.stringify(savedCategories));
-
-        alert("القسم انضاف بنجاح!");
-        catInput.value = ""; 
-        
-        // أهم خطوة: استدعاء دالة العرض لتحديث الجدول أمامك فوراً
-        displayCategoriesInAdmin(); 
-        populateCategorySelect(); // لتحديث القائمة في "إضافة منتج"
-    }
-
-    // 4. وظيفة حذف قسم
-    function deleteCategory(index) {
-        if(confirm("هل أنت متأكد من حذف هذا القسم؟")) {
-            let categoriesList = JSON.parse(localStorage.getItem('karmashaCategories')) || [];
-            categoriesList.splice(index, 1);
-            localStorage.setItem('karmashaCategories', JSON.stringify(categoriesList));
-            displayCategoriesInAdmin(); // تحديث الجدول فوراً
-        }
-    }
-
-    // وظيفة لتعبئة قائمة الأقسام في نموذج إضافة المنتج
-    function populateCategorySelect() {
-        const select = document.getElementById('categorySelect');
-        select.innerHTML = '<option value="">اختر القسم</option>';
-        categories.forEach(cat => {
-            select.innerHTML += `<option value="${cat}">${cat}</option>`;
-        });
-    }
-
-    // مثال لإضافة قسم في فايربيز (داخل سكريبت الموديول في الأدمن)
-    window.saveCategoryToFirebase = async function() {
-        const name = document.getElementById('categoryInput').value;
-        try {
-            await addDoc(collection(window.db, "categories"), {
-                name: name,
-                createdAt: new Date()
+        // 1. جلب الطلبات (Orders)
+        const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+        onSnapshot(qOrders, (snapshot) => {
+            const newO = document.getElementById('new-orders');
+            const kitO = document.getElementById('kitchen-orders');
+            newO.innerHTML = ''; kitO.innerHTML = '';
+            snapshot.forEach(d => {
+                const o = d.data();
+                const html = `<div class="order-card">
+                    <div class="card-header"><span class="order-id">#${d.id.substring(0,4)}</span></div>
+                    <h4>${o.customerName}</h4><p>${o.customerPhone} | ${o.customerAddress}</p>
+                    <div style="font-size:12px;color:red;margin-top:5px">${o.items.map(i=>i.name).join(', ')}</div>
+                    <div class="card-footer">
+                        ${o.status=='جديد'?`<button class="details-btn" onclick="window.upStat('${d.id}','في المطبخ')">قبول</button>`:`<button class="details-btn" style="background:green" onclick="window.upStat('${d.id}','تم')">تسليم</button>`}
+                        <span class="price">${o.totalPrice}ج</span>
+                    </div>
+                </div>`;
+                if(o.status=='جديد') newO.innerHTML+=html;
+                else if(o.status=='في المطبخ') kitO.innerHTML+=html;
             });
-            alert("تمت الإضافة للفايربيز بنجاح!");
-        } catch (e) { console.error(e); }
-    }
+        });
+        window.upStat = async (id,s) => await updateDoc(doc(db,"orders",id),{status:s});
 
-    // بيانات تجريبية للسجل (المفروض دي تيجي من الذاكرة)
-    let orderRecords = [
-        { id: "#1001", date: "2023-10-25 09:30 م", customer: "محمد علي", items: "وجبة 3 قطع، ستربس", total: 320, status: "تم التوصيل" },
-        { id: "#1002", date: "2023-10-25 10:15 م", customer: "أحمد حسن", items: "سندوتش تورتيلا", total: 95, status: "تم التوصيل" },
-        { id: "#1003", date: "2023-10-26 01:00 ص", customer: "سارة محمود", items: "وجبة عائلية 12 قطعة", total: 810, status: "ملغي" }
-    ];
+        // 2. إدارة الأقسام (Firebase Categories - التعديل الجديد)
+        // دالة لعرض الأقسام في الجدول وفي قائمة إضافة المنتج
+        function listenToCategories() {
+            const q = query(collection(db, "categories"), orderBy("createdAt", "asc"));
+            onSnapshot(q, (snapshot) => {
+                const select = document.getElementById('categorySelect');
+                const table = document.getElementById('admin-categories-table');
+                
+                // تنظيف القوائم
+                select.innerHTML = '<option value="">اختر القسم</option>';
+                table.innerHTML = '';
 
-    function loadOrderRecords() {
-        const tableBody = document.getElementById('records-table-body');
-        const totalSalesSpan = document.getElementById('total-sales-amount');
+                snapshot.forEach(docSnap => {
+                    const cat = docSnap.data();
+                    // إضافة للجدول
+                    table.innerHTML += `
+                        <tr>
+                            <td>${cat.name}</td>
+                            <td><button onclick="window.deleteCategory('${docSnap.id}')" class="btn-edit" style="background:#c62828;">حذف</button></td>
+                        </tr>`;
+                    // إضافة للقائمة المنسدلة
+                    select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+                });
+            });
+        }
 
-        tableBody.innerHTML = "";
-        let totalSales = 0;
+        // دالة حفظ قسم جديد في فايربيز
+        window.saveCategory = async function() {
+            const input = document.getElementById('categoryInput');
+            const name = input.value.trim();
+            if(!name) return alert("اكتب اسم القسم!");
+            
+            try {
+                await addDoc(collection(db, "categories"), {
+                    name: name,
+                    createdAt: serverTimestamp()
+                });
+                input.value = ''; // تفريغ الحقل
+                alert("تم إضافة القسم بنجاح ويظهر الآن في كل الأجهزة");
+            } catch(e) {
+                console.error(e);
+                alert("حدث خطأ في الإضافة");
+            }
+        }
 
-        orderRecords.forEach(order => {
-            // حساب الإجمالي للطلبات اللي "تم التوصيل" فقط
-            if(order.status === "تم التوصيل") totalSales += order.total;
+        // دالة حذف قسم
+        window.deleteCategory = async function(id) {
+            if(confirm("هل أنت متأكد من حذف هذا القسم؟")) {
+                await deleteDoc(doc(db, "categories", id));
+            }
+        }
 
-            let statusColor = order.status === "تم التوصيل" ? "#2e7d32" : "#c62828";
+        // تشغيل مراقب الأقسام
+        listenToCategories();
 
-            tableBody.innerHTML += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px; font-weight: bold; color: #555;">${order.id}</td>
-                    <td style="font-size: 13px; color: #888;">${order.date}</td>
-                    <td>${order.customer}</td>
-                    <td style="font-size: 13px;">${order.items}</td>
-                    <td style="font-weight: bold;">${order.total} ج</td>
-                    <td><span style="color: white; background: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-size: 12px;">${order.status}</span></td>
-                </tr>
-            `;
+
+        // 3. المنتجات (Products)
+        window.saveProduct = async function() {
+            const name = document.getElementById('food-name').value;
+            const desc = document.getElementById('food-desc').value;
+            const cat = document.getElementById('categorySelect').value;
+            const rows = document.querySelectorAll('.price-row');
+            let prices = [];
+            
+            // تجميع الأسعار
+            rows.forEach(r => {
+                const s = r.querySelector('.size-input').value;
+                const p = r.querySelector('.price-input').value;
+                if(s && p) prices.push({size: s, price: parseInt(p)});
+            });
+
+            if(!cat) return alert("لازم تختار القسم!");
+            if(prices.length === 0) return alert("لازم تضيف سعر واحد على الأقل");
+
+            await addDoc(collection(db, "products"), { 
+                name, description: desc, category: cat, prices, img: window.productImg||'', createdAt: serverTimestamp() 
+            });
+            alert("تم حفظ المنتج!"); location.reload();
+        }
+
+        // تحميل المنتجات
+        async function loadProds() {
+            const s = await getDocs(collection(db, "products"));
+            const t = document.getElementById('products-table-body'); t.innerHTML='';
+            s.forEach(d => {
+                const p = d.data();
+                t.innerHTML+=`<tr><td>${p.name}</td><td>${p.prices && p.prices[0] ? p.prices[0].price : 'غير محدد'}</td><td>${p.category}</td><td><button onclick="window.delP('${d.id}')" style="color:red">X</button></td></tr>`;
+            });
+        }
+        window.delP = async(id) => { if(confirm('حذف؟')) await deleteDoc(doc(db,"products",id)); loadProds(); }
+        loadProds();
+
+        // معالجة الصور
+        window.productImg = "";
+        document.getElementById('food-img-file').addEventListener('change', e=>{
+            const r=new FileReader(); r.onload=()=>window.productImg=r.result; r.readAsDataURL(e.target.files[0]);
+        });
+        
+        // مساعدة الواجهة
+        window.addPriceRow = () => document.getElementById('prices-container').innerHTML += `<div class="price-row"><input type="text" class="size-input"><input type="number" class="price-input"><button type="button" onclick="this.parentElement.remove()">x</button></div>`;
+        document.getElementById('add-food-form').onsubmit=(e)=>{e.preventDefault();window.saveProduct()};
+
+        // Navigation
+        const items = document.querySelectorAll('.side-nav li');
+        const secs = document.querySelectorAll('.admin-section');
+        items.forEach(item => {
+            item.addEventListener('click', function() {
+                items.forEach(i=>i.classList.remove('active')); this.classList.add('active');
+                secs.forEach(s=>s.classList.remove('active'));
+                const t = this.innerText;
+                if(t.includes("الطلبات")) document.getElementById('live-orders-section').classList.add('active');
+                else if(t.includes("شات")) document.getElementById('chat-section').classList.add('active');
+                else if(t.includes("المنتجات")) document.getElementById('manage-products-section').classList.add('active');
+                else if(t.includes("إضافة")) document.getElementById('add-product-section').classList.add('active');
+                else if(t.includes("الأقسام")) document.getElementById('manage-categories-section').classList.add('active');
+            });
         });
 
-        totalSalesSpan.innerText = totalSales;
-    }
-
-    // دالة البحث في السجل
-    function filterRecords() {
-        let input = document.getElementById("searchOrders").value.toLowerCase();
-        let rows = document.querySelectorAll("#records-table-body tr");
-
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(input) ? "" : "none";
-        });
-    }
-
-    // تشغيل العرض عند فتح الصفحة
-    displayCategoriesInAdmin();
-    populateCategorySelect();
-</script>
-
+    </script>
 </body>
 </html>
