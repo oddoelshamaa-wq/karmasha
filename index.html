@@ -278,12 +278,17 @@
                 const item = `
                     <div class="food-card" onclick="openProductModal('${product.name}')">
                         <div class="food-image">
-                            <img src="${product.img || 'fried-chicken.jpg'}" alt="${product.name}" onerror="this.src='fried-chicken.jpg'">
+                            <img src="${product.img || 'default.jpg'}" alt="${product.name}">
                         </div>
                         <div class="food-details">
                             <h3>${product.name}</h3>
-                            <p>${product.description.substring(0, 50)}...</p>
-                            <div class="price-tag">${product.price} ج.م</div>
+                            <p>${product.description.substring(0, 40)}...</p>
+
+                            <!-- التعديل هنا 👇 -->
+                            <div class="price-tag">
+                                يبدأ من ${product.prices[0].price} ج.م
+                            </div>
+
                             <button class="view-btn">تفاصيل الوجبة</button>
                         </div>
                     </div>`;
