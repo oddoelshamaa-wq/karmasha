@@ -213,6 +213,86 @@
         </section>
     </div>
 
+    <!-- تحميل مكتبات فايربيز الأساسية -->
+    <script type="module">
+      // استيراد الدوال اللي محتاجينها
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getFirestore, collection, query, onSnapshot, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      // بيانات مشروعك
+      const firebaseConfig = {
+        apiKey: "AIzaSyArc3Y--aq-6e8omAbcpm8fZ5BvNcYMtkw",
+        authDomain: "karmasha-bfad3.firebaseapp.com",
+        projectId: "karmasha-bfad3",
+        storageBucket: "karmasha-bfad3.firebasestorage.app",
+        messagingSenderId: "584846393500",
+        appId: "1:584846393500:web:5a58f969f3a66126026d59",
+        measurementId: "G-G518D7LXSS"
+      };
+
+      // تشغيل فايربيز
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // تصدير الأدوات عشان نستخدمها في باقي الكود
+      window.db = db;
+
+      function listenToOrders() {
+          const q = query(collection(window.db, "orders"), orderBy("createdAt", "desc"));
+
+          onSnapshot(q, (snapshot) => {
+              const newOrdersContainer = document.getElementById('new-orders'); // العمود الأحمر
+              const kitchenOrdersContainer = document.getElementById('kitchen-orders'); // عمود المطبخ
+
+              newOrdersContainer.innerHTML = '';
+              kitchenOrdersContainer.innerHTML = '';
+
+              snapshot.forEach((docSnapshot) => {
+                  const order = docSnapshot.data();
+                  const orderId = docSnapshot.id;
+
+                  // كارت الطلب بتنسيق قرمشة
+                  const orderHtml = `
+                      <div class="order-card">
+                          <div class="card-header">
+                              <span class="order-id">#${orderId.substring(0,5)}</span>
+                              <span class="order-time">${order.createdAt?.toDate().toLocaleTimeString('ar-EG') || 'الآن'}</span>
+                          </div>
+                          <div class="customer-info">
+                              <h4>${order.customerName}</h4>
+                              <p><i class="fas fa-map-marker-alt"></i> ${order.customerAddress}</p>
+                              <p><i class="fas fa-phone"></i> ${order.customerPhone}</p>
+                              <div style="font-size:12px; color:#d2000a; margin-top:5px;">
+                                  ${order.items.map(i => `• ${i.name}`).join('<br>')}
+                              </div>
+                          </div>
+                          <div class="card-footer">
+                              ${order.status === "جديد"
+                                  ? `<button class="details-btn" onclick="moveToKitchen('${orderId}')">قبول الطلب</button>`
+                                  : `<button class="details-btn" style="background:#2e7d32; color:white;">بدأ الطهي</button>`}
+                              <span class="price">${order.totalPrice} ج</span>
+                          </div>
+                      </div>
+                  `;
+
+                  if (order.status === "جديد") {
+                      newOrdersContainer.innerHTML += orderHtml;
+                  } else if (order.status === "في المطبخ") {
+                      kitchenOrdersContainer.innerHTML += orderHtml;
+                  }
+              });
+          });
+      }
+
+      // دالة لنقل الطلب من "جديد" إلى "في المطبخ"
+      window.moveToKitchen = async function(id) {
+          const orderRef = doc(window.db, "orders", id);
+          await updateDoc(orderRef, { status: "في المطبخ" });
+      };
+
+      listenToOrders();
+    </script>
+
 <script>
     // الحصول على جميع أزرار القائمة الجانبية
     const menuItems = document.querySelectorAll('.side-nav li');
