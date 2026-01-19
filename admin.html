@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم قرمشة - متابعة الطلبات</title>
+    <link rel="stylesheet" href="admin-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- القائمة الجانبية (Sidebar) -->
+    <div class="sidebar">
+        <div class="admin-logo-section">
+            <img src="5515928d-da81-433e-8bc9-245180ba6724.jpg" alt="Admin Logo" class="admin-logo">
+            <p>لوحة التحكم</p>
+        </div>
+        
+        <nav class="side-nav">
+            <ul>
+                <li class="active"><a href="#"><i class="fas fa-bell"></i> الطلبات الحية</a></li>
+                <li><a href="#"><i class="fas fa-chart-line"></i> السجل والإحصائيات</a></li>
+                <li><a href="#"><i class="fas fa-users"></i> شات الفريق</a></li>
+                <li><a href="#"><i class="fas fa-box"></i> إدارة المنتجات</a></li>
+                <li><a href="#"><i class="fas fa-list"></i> إدارة الأقسام</a></li>
+                <li><a href="#"><i class="fas fa-file-alt"></i> التقارير</a></li>
+                <li><a href="#"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</a></li>
+                <li><a href="#"><i class="fas fa-user-tie"></i> الموظفين</a></li>
+                <li class="badge-item">
+                    <a href="#"><i class="fas fa-comments"></i> شات العملاء</a>
+                    <span class="badge">5</span>
+                </li>
+            </ul>
+        </nav>
+
+        <button class="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content">
+        <header class="top-bar">
+            <div class="server-status">
+                <span class="dot"></span> متصل بالخادم
+            </div>
+            <div class="page-title" id="current-page-title">
+                ⚡ الطلبات الحية
+            </div>
+        </header>
+
+        <!-- قسم الطلبات الحية (شغال افتراضياً) -->
+        <section id="live-orders-section" class="admin-section active">
+            <div class="orders-container">
+
+                <!-- عمود الطلبات الجديدة -->
+                <div class="order-column">
+                    <div class="column-header red-header">
+                        <span><i class="fas fa-star"></i> طلبات جديدة راجعها</span>
+                    </div>
+
+                    <div class="order-list" id="new-orders">
+                        <!-- كارت طلب -->
+                        <div class="order-card">
+                            <div class="card-header">
+                                <span class="order-id">#eJ5H</span>
+                                <span class="order-time">07:42 م</span>
+                            </div>
+                            <div class="customer-info">
+                                <h4>شمشيم</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> المعادي - يش</p>
+                            </div>
+                            <div class="card-footer">
+                                <button class="details-btn">التفاصيل</button>
+                                <span class="price">30 ج</span>
+                            </div>
+                        </div>
+
+                        <div class="order-card">
+                            <div class="card-header">
+                                <span class="order-id">#OvsK</span>
+                                <span class="order-time">02:21 م</span>
+                            </div>
+                            <div class="customer-info">
+                                <h4>محمود</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> مصر الجديدة - عمارة 17B، شارع محمد بدر</p>
+                            </div>
+                            <div class="card-footer">
+                                <button class="details-btn">التفاصيل</button>
+                                <span class="price">37 ج</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- عمود في المطبخ -->
+                <div class="order-column">
+                    <div class="column-header blue-header">
+                        <span><i class="fas fa-fire"></i> في المطبخ (جاري)</span>
+                    </div>
+
+                    <div class="order-list" id="kitchen-orders">
+                        <div class="order-card kitchen-card">
+                            <div class="card-header">
+                                <span class="order-id">#LKCu</span>
+                                <span class="order-time">10:03 ص</span>
+                            </div>
+                            <div class="customer-info">
+                                <h4>محمود</h4>
+                                <p><i class="fas fa-map-marker-alt"></i> مصر الجديدة - عمارة 17B، شارع محمد بدر</p>
+                            </div>
+                            <div class="card-footer">
+                                <button class="details-btn">التفاصيل</button>
+                                <span class="price">37 ج</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- قسم إدارة المنتجات -->
+        <section id="manage-products-section" class="admin-section">
+            <div class="table-container">
+                <h3>قائمة وجبات مطعم قرمشة</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الوجبة</th>
+                            <th>السعر (عادي)</th>
+                            <th>القسم</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- المنتجات ستُحمل ديناميكياً -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- قسم إدارة أقسام المنيو في صفحة الأدمن -->
+        <section id="manage-categories-section" class="admin-section">
+            <div class="table-container">
+                <h3>إدارة أقسام المنيو (القائمة العلوية)</h3>
+                <div class="admin-card">
+                    <h3>إضافة قسم جديد للقائمة</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="categoryInput" placeholder="اكتب اسم القسم (مثلاً: عروض الشتاء)">
+                        <button onclick="saveCategory()" class="btn-add">إضافة القسم</button>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>اسم القسم</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-categories-table">
+                        <!-- الأقسام هتظهر هنا برمجياً -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- قسم إضافة منتج جديد -->
+        <section id="add-product-section" class="admin-section">
+            <div class="form-container">
+                <h3>إضافة وجبة جديدة للمنيو</h3>
+                <form id="add-food-form">
+                    <input type="text" placeholder="اسم الوجبة (مثلاً: ريزو قرمشة)" required>
+                    <input type="number" placeholder="السعر" required>
+                    <textarea placeholder="وصف الوجبة"></textarea>
+                    <select id="categorySelect" required>
+                        <option value="">اختر القسم</option>
+                    </select>
+                    <button type="submit" class="btn-main-red">حفظ المنتج</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- قسم سجل الطلبات -->
+        <section id="records-section" class="admin-section">
+            <div class="table-container" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>📋 سجل المبيعات والطلبات</h3>
+                    <div class="filter-box">
+                        <input type="text" id="searchOrders" placeholder="بحث باسم العميل أو الرقم..." onkeyup="filterRecords()" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; text-align: right;">
+                    <thead>
+                        <tr style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                            <th style="padding: 15px;">رقم الطلب</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>الوجبات</th>
+                            <th>الإجمالي</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-table-body">
+                        <!-- البيانات هتظهر هنا بالـ JS -->
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 20px; padding: 15px; background: #e31e24; color: white; border-radius: 10px; display: inline-block;">
+                    إجمالي مبيعات السجل: <span id="total-sales-amount" style="font-weight: bold; font-size: 20px;">0</span> ج.م
+                </div>
+            </div>
+        </section>
+    </div>
+
+<script>
+    // الحصول على جميع أزرار القائمة الجانبية
+    const menuItems = document.querySelectorAll('.side-nav li');
+
+    // الحصول على جميع أقسام المحتوى
+    const sections = document.querySelectorAll('.admin-section');
+
+    // عنوان الصفحة في الهيدر
+    const pageTitle = document.getElementById('current-page-title');
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // 1. إزالة حالة النشاط (active) من كل الأزرار
+            menuItems.forEach(i => i.classList.remove('active'));
+
+            // 2. إضافة حالة النشاط للزر الذي تم الضغط عليه
+            this.classList.add('active');
+
+            // 3. إخفاء كل الأقسام
+            sections.forEach(sec => sec.classList.remove('active'));
+
+            // 4. تحديد أي قسم سيظهر بناءً على النص داخل الزر
+            const text = this.innerText.trim();
+
+            if (text.includes("الطلبات الحية")) {
+                document.getElementById('live-orders-section').classList.add('active');
+                pageTitle.innerText = "⚡ الطلبات الحية";
+            }
+            else if (text.includes("إدارة المنتجات")) {
+                document.getElementById('manage-products-section').classList.add('active');
+                pageTitle.innerText = "📦 إدارة المنيو";
+                updateProductsTable();
+            }
+            else if (text.includes("إدارة الأقسام")) {
+                document.getElementById('manage-categories-section').classList.add('active');
+                pageTitle.innerText = "📂 إدارة الأقسام";
+                displayCategoriesInAdmin();
+            }
+            else if (text.includes("السجل والإحصائيات")) {
+                document.getElementById('records-section').classList.add('active');
+                pageTitle.innerText = "📋 سجل العمليات";
+                loadOrderRecords();
+            }
+            else if (text.includes("إضافة منتج جديد")) {
+                document.getElementById('add-product-section').classList.add('active');
+                pageTitle.innerText = "➕ إضافة وجبة جديدة";
+            }
+            // يمكنك إضافة باقي الشروط هنا للتقارير والموظفين...
+        });
+    });
+
+    // Product management
+    let editingIndex = null;
+    const form = document.getElementById('add-food-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = this.querySelector('input[type="text"]').value;
+        const price = this.querySelector('input[type="number"]').value;
+        const description = this.querySelector('textarea').value;
+        const category = this.querySelector('#categorySelect').value;
+        const product = { name, price, description, category };
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+
+        if (editingIndex !== null) {
+            products[editingIndex] = product;
+            editingIndex = null;
+            submitBtn.textContent = 'حفظ المنتج';
+            alert('تم تعديل المنتج بنجاح!');
+        } else {
+            products.push(product);
+            alert('تم إضافة المنتج بنجاح!');
+        }
+
+        localStorage.setItem('products', JSON.stringify(products));
+        this.reset();
+        updateProductsTable();
+    });
+
+    function updateProductsTable() {
+        const tbody = document.querySelector('#manage-products-section tbody');
+        tbody.innerHTML = '';
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        products.forEach((product, index) => {
+            const row = `<tr>
+                <td>${product.name}</td>
+                <td>${product.price} ج</td>
+                <td>${product.category || 'غير محدد'}</td>
+                <td><span class="status success">متوفر</span></td>
+                <td>
+                    <button class="btn-edit" onclick="editProduct(${index})">تعديل</button>
+                    <button class="btn-edit" style="background: #f44336; margin-left: 5px;" onclick="deleteProduct(${index})">حذف</button>
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function editProduct(index) {
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        const product = products[index];
+        form.querySelector('input[type="text"]').value = product.name;
+        form.querySelector('input[type="number"]').value = product.price;
+        form.querySelector('textarea').value = product.description;
+        form.querySelector('#categorySelect').value = product.category || '';
+        editingIndex = index;
+        submitBtn.textContent = 'تحديث المنتج';
+        // Switch to add section
+        sections.forEach(sec => sec.classList.remove('active'));
+        document.getElementById('add-product-section').classList.add('active');
+        pageTitle.innerText = "✏️ تعديل المنتج";
+    }
+
+    function deleteProduct(index) {
+        if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+            let products = JSON.parse(localStorage.getItem('products')) || [];
+            products.splice(index, 1);
+            localStorage.setItem('products', JSON.stringify(products));
+            updateProductsTable();
+            alert('تم حذف المنتج!');
+        }
+    }
+
+    // 1. مصفوفة الأقسام الافتراضية
+    let categories = JSON.parse(localStorage.getItem('menuCategories')) ||
+                     ["فرايد تشيكن", "تشيكن ستربس", "وجبات مسحب", "سندوتشات", "وجبات أطفال"];
+
+    // 2. وظيفة لعرض الأقسام في جدول الأدمن
+    function displayCategoriesInAdmin() {
+        const tableBody = document.getElementById('admin-categories-table');
+        tableBody.innerHTML = ''; // مسح الجدول الحالي
+
+        categories.forEach((cat, index) => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${cat}</td>
+                    <td>
+                        <button onclick="deleteCategory(${index})" class="btn-edit" style="background: #f44336;">حذف</button>
+                    </td>
+                </tr>
+            `;
+        });
+        // حفظ التعديلات
+        localStorage.setItem('menuCategories', JSON.stringify(categories));
+    }
+
+    function saveCategory() {
+        let catInput = document.getElementById('categoryInput');
+        let catName = catInput.value.trim();
+
+        if (catName === "") {
+            alert("اكتب اسم القسم الأول!");
+            return;
+        }
+
+        // 1. هات الأقسام القديمة من المخزن (لو مفيش هات مصفوفة فاضية)
+        let categories = JSON.parse(localStorage.getItem('karmashaCategories')) || ["فرايد تشيكن", "تشيكن ستربس"];
+
+        // 2. ضيف القسم الجديد للمصفوفة
+        categories.push(catName);
+
+        // 3. احفظ المصفوفة الجديدة في المخزن
+        localStorage.setItem('karmashaCategories', JSON.stringify(categories));
+
+        alert("القسم انضاف بنجاح! روح شوف صفحة المشتري");
+        catInput.value = ""; // فضي الخانة
+    }
+
+    // 4. وظيفة حذف قسم
+    function deleteCategory(index) {
+        if(confirm("هل أنت متأكد من حذف هذا القسم؟")) {
+            categories.splice(index, 1);
+            displayCategoriesInAdmin();
+        }
+    }
+
+    // وظيفة لتعبئة قائمة الأقسام في نموذج إضافة المنتج
+    function populateCategorySelect() {
+        const select = document.getElementById('categorySelect');
+        select.innerHTML = '<option value="">اختر القسم</option>';
+        categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+    }
+
+    // بيانات تجريبية للسجل (المفروض دي تيجي من الذاكرة)
+    let orderRecords = [
+        { id: "#1001", date: "2023-10-25 09:30 م", customer: "محمد علي", items: "وجبة 3 قطع، ستربس", total: 320, status: "تم التوصيل" },
+        { id: "#1002", date: "2023-10-25 10:15 م", customer: "أحمد حسن", items: "سندوتش تورتيلا", total: 95, status: "تم التوصيل" },
+        { id: "#1003", date: "2023-10-26 01:00 ص", customer: "سارة محمود", items: "وجبة عائلية 12 قطعة", total: 810, status: "ملغي" }
+    ];
+
+    function loadOrderRecords() {
+        const tableBody = document.getElementById('records-table-body');
+        const totalSalesSpan = document.getElementById('total-sales-amount');
+
+        tableBody.innerHTML = "";
+        let totalSales = 0;
+
+        orderRecords.forEach(order => {
+            // حساب الإجمالي للطلبات اللي "تم التوصيل" فقط
+            if(order.status === "تم التوصيل") totalSales += order.total;
+
+            let statusColor = order.status === "تم التوصيل" ? "#2e7d32" : "#c62828";
+
+            tableBody.innerHTML += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px; font-weight: bold; color: #555;">${order.id}</td>
+                    <td style="font-size: 13px; color: #888;">${order.date}</td>
+                    <td>${order.customer}</td>
+                    <td style="font-size: 13px;">${order.items}</td>
+                    <td style="font-weight: bold;">${order.total} ج</td>
+                    <td><span style="color: white; background: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-size: 12px;">${order.status}</span></td>
+                </tr>
+            `;
+        });
+
+        totalSalesSpan.innerText = totalSales;
+    }
+
+    // دالة البحث في السجل
+    function filterRecords() {
+        let input = document.getElementById("searchOrders").value.toLowerCase();
+        let rows = document.querySelectorAll("#records-table-body tr");
+
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(input) ? "" : "none";
+        });
+    }
+
+    // تشغيل العرض عند فتح الصفحة
+    displayCategoriesInAdmin();
+    populateCategorySelect();
+</script>
+
+</body>
+</html>
