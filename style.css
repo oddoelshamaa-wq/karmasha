@@ -636,3 +636,56 @@ footer {
     .product-main-info { padding: 20px; }
     .product-main-info h2 { font-size: 24px; }
 }
+
+/* تنسيقات البروفايل الشخصي */
+.user-profile-trigger {
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    padding: 8px 15px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    transition: 0.3s;
+}
+.user-profile-trigger:hover { background: var(--main-red); }
+
+.user-avatar-big {
+    font-size: 60px;
+    color: var(--main-red);
+    margin-bottom: 10px;
+}
+
+.user-orders-mini-list {
+    max-height: 200px;
+    overflow-y: auto;
+    text-align: right;
+    margin-top: 15px;
+}
+
+.user-order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.order-status-badge {
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+}
+
+.btn-logout {
+    margin-top: 20px;
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+}
