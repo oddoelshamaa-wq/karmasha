@@ -268,7 +268,7 @@
                 const item = `
                     <div class="food-card" onclick="openProductModal('${product.name}')">
                         <div class="food-image">
-                            <img src="fried-chicken.jpg" alt="${product.name}">
+                            <img src="${product.img}" alt="${product.name}" onerror="this.src='fried-chicken.jpg'">
                         </div>
                         <div class="food-details">
                             <h3>${product.name}</h3>
@@ -291,7 +291,7 @@
                 document.getElementById('modal-name').innerText = product.name;
                 document.getElementById('modal-desc').innerText = product.description;
                 document.getElementById('modal-price').innerText = product.price;
-                document.getElementById('modal-img').src = "fried-chicken.jpg"; // هنا تضع صورة المنتج الحقيقية
+                document.getElementById('modal-img').src = product.img || "fried-chicken.jpg"; // هنا تضع صورة المنتج الحقيقية
 
                 // تظبيط زرار الإضافة للسلة داخل المودال
                 document.getElementById('modal-add-btn').onclick = function(e) {
@@ -550,10 +550,29 @@
         // 4. شغل الدالة دي أول ما الصفحة تفتح
         window.onload = function() {
             updateUIForUser();
-            loadCategories();
+            listenToCategories();
             let savedCategories = JSON.parse(localStorage.getItem('karmashaCategories')) || ["فرايد تشيكن", "تشيكن ستربس"];
             renderProductsForCategory(savedCategories[0]);
         };
+
+        // مراقبة الأقسام وتحديث القائمة تلقائياً
+        function listenToCategories() {
+            const q = query(collection(window.db, "categories"), orderBy("createdAt", "asc"));
+
+            onSnapshot(q, (snapshot) => {
+                const navContainer = document.getElementById('dynamicCategories');
+                navContainer.innerHTML = "";
+
+                snapshot.forEach((doc) => {
+                    const cat = doc.data().name;
+                    navContainer.innerHTML += `
+                        <a href="javascript:void(0)" onclick="renderProductsForCategory('${cat}')" class="nav-item">
+                            ${cat}
+                        </a>
+                    `;
+                });
+            });
+        }
 
         // وظيفة فتح المودال (تأكد إن الـ ID مطابق)
         function openAuthModal() {
