@@ -131,6 +131,31 @@
         </div>
     </div>
 
+    <!-- مودال البروفايل الشخصي -->
+    <div id="profile-modal" class="modal blur-bg">
+        <div class="modal-content glass-card animate-pop">
+            <span class="close" onclick="toggleProfileModal()">&times;</span>
+            <div class="profile-header">
+                <div class="user-avatar-big">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h3 id="profile-name-title">محمود</h3>
+                <p id="profile-phone-detail">01122884885</p>
+            </div>
+            
+            <div class="profile-body">
+                <h4><i class="fas fa-history"></i> طلباتك الأخيرة</h4>
+                <div id="user-orders-list" class="user-orders-mini-list">
+                    <p class="loading-text">جاري تحميل طلباتك...</p>
+                </div>
+            </div>
+            
+            <button onclick="logout()" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </button>
+        </div>
+    </div>
+
     <!-- أيقونة السلة المتطورة -->
     <div class="cart-toggle ripple" onclick="toggleCart()">
         <i class="fas fa-shopping-basket"></i>
@@ -141,7 +166,7 @@
     <script type="module">
       // استيراد الدوال اللي محتاجينها
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
       import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
       // بيانات مشروعك (اللي إنت بعتها)
@@ -352,17 +377,18 @@
             });
         }
 
-        let cart = [];
-        let total = 0;
+        window.cart = [];
+        window.total = 0;
 
         // فتح وقفل السلة
         function toggleCart() {
             document.getElementById('cart-sidebar').classList.toggle('open');
         }
+        window.toggleCart = toggleCart;
 
         // إضافة منتج للسلة (استدعيها من زرار الوجبة)
         function addToCart(name, price) {
-            cart.push({ name, price });
+            window.cart.push({ name, price });
             updateCartUI();
             // تفتيح السلة تلقائياً عند الإضافة
             document.getElementById('cart-sidebar').classList.add('open');
@@ -374,10 +400,10 @@
             const cartTotal = document.getElementById('cart-total');
 
             cartItems.innerHTML = "";
-            total = 0;
+            window.total = 0;
 
-            cart.forEach((item, index) => {
-                total += item.price;
+            window.cart.forEach((item, index) => {
+                window.total += item.price;
                 cartItems.innerHTML += `
                     <div class="cart-item" style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding:5px;">
                         <span>${item.name}</span>
@@ -387,46 +413,17 @@
                 `;
             });
 
-            cartCount.innerText = cart.length;
-            cartTotal.innerText = total;
+            cartCount.innerText = window.cart.length;
+            cartTotal.innerText = window.total;
         }
+        window.updateCartUI = updateCartUI;
 
         function removeFromCart(index) {
-            cart.splice(index, 1);
+            window.cart.splice(index, 1);
             updateCartUI();
         }
 
-        // إرسال الطلب (بيانات الزبون + الطلبات)
-        async function sendOrder() {
-            const name = document.getElementById('cust-name').value;
-            const phone = document.getElementById('cust-phone').value;
-            const address = document.getElementById('cust-address').value;
 
-            if (!name || !phone || !address || cart.length === 0) {
-                alert("كمل بياناتك وضيف أكل للسلة يا بطل!");
-                return;
-            }
-
-            const orderData = {
-                customerName: name,
-                customerPhone: phone,
-                customerAddress: address,
-                items: cart, // مصفوفة السلة
-                totalPrice: total,
-                status: "جديد",
-                createdAt: serverTimestamp()
-            };
-
-            try {
-                await addDoc(collection(window.db, "orders"), orderData);
-                alert("طلبك وصل للمطبخ! استعد للقرمشة 🍗");
-                cart = []; // فضي السلة
-                updateCartUI();
-                toggleCart();
-            } catch (e) {
-                alert("حدث خطأ في الشبكة");
-            }
-        }
 
         // 1. وظائف فتح وقفل المودال
         function openAuthModal() { document.getElementById('auth-modal').style.display = 'block'; }
@@ -477,8 +474,16 @@
         function updateUIForUser() {
             if (currentUser) {
                 document.getElementById('user-area').innerHTML = `
-                    <span style="color:white; margin-left:10px;">أهلاً ${currentUser.name}</span>
-                    <button onclick="logout()" class="login-btn-nav" style="background:#333;">خروج</button>
+                    <div class="user-profile-trigger" onclick="toggleProfileModal()">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="display-user-name">أهلاً ${currentUser.name}</span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('user-area').innerHTML = `
+                    <button onclick="openAuthModal()" class="login-btn-nav shine-btn">
+                        <i class="fas fa-user-circle"></i> دخول / تسجيل
+                    </button>
                 `;
             }
         }
@@ -488,7 +493,59 @@
             location.reload();
         }
 
+        // وظيفة فتح وقفل البروفايل
+        window.toggleProfileModal = function() {
+            const modal = document.getElementById('profile-modal');
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'flex';
+                loadUserOrders(); // حمل الطلبات أول ما يفتح
+            }
+        }
 
+        // تحميل طلبات العميل من فايربيز
+        async function loadUserOrders() {
+            const listContainer = document.getElementById('user-orders-list');
+            const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
+
+            if (!currentUser) return;
+
+            // Set profile info
+            document.getElementById('profile-name-title').innerText = currentUser.name;
+            document.getElementById('profile-phone-detail').innerText = currentUser.phone;
+
+            try {
+                // بنجيب الطلبات اللي فيها رقم موبايل العميل
+                const q = query(
+                    collection(window.db, "orders"),
+                    where("customerPhone", "==", currentUser.phone),
+                    orderBy("createdAt", "desc")
+                );
+
+                const querySnapshot = await getDocs(q);
+                listContainer.innerHTML = "";
+
+                if (querySnapshot.empty) {
+                    listContainer.innerHTML = "<p>لسه مفيش طلبات.. اطلب دلوقتي!</p>";
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    listContainer.innerHTML += `
+                        <div class="user-order-item">
+                            <span>#${doc.id.substring(0,5)}</span>
+                            <span class="order-status-badge">${order.status}</span>
+                            <b>${order.totalPrice} ج</b>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Error loading orders: ", e);
+                listContainer.innerHTML = "<p>فشل تحميل الطلبات</p>";
+            }
+        }
 
         // 4. شغل الدالة دي أول ما الصفحة تفتح
         window.onload = function() {
@@ -550,7 +607,7 @@
                 <input type="text" id="cust-name" placeholder="الاسم بالكامل">
                 <input type="tel" id="cust-phone" placeholder="رقم الموبايل">
                 <textarea id="cust-address" placeholder="العنوان بالتفصيل (المنطقة، الشارع، رقم الدور)"></textarea>
-                <button onclick="sendOrder()" class="order-submit-btn">تأكيد الطلب (كاش)</button>
+                <button id="confirmOrderBtn" class="order-submit-btn">تأكيد الطلب (كاش)</button>
             </div>
         </div>
     </div>
@@ -558,6 +615,63 @@
     <footer>
         <p>جميع الحقوق محفوظة لمطعم قرمشة © 2024</p>
     </footer>
+
+<script type="module">
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // أول ما الصفحة تحمل، هنمسك الزرار من الـ ID
+    document.addEventListener('DOMContentLoaded', () => {
+        const orderBtn = document.getElementById('confirmOrderBtn');
+
+        if (orderBtn) {
+            orderBtn.addEventListener('click', async () => {
+                const name = document.getElementById('cust-name').value;
+                const phone = document.getElementById('cust-phone').value;
+                const address = document.getElementById('cust-address').value;
+
+                if (!name || !phone || !address) {
+                    alert("اكتب بياناتك يا بطل! ✍️");
+                    return;
+                }
+
+                try {
+                    orderBtn.disabled = true;
+                    orderBtn.innerText = "جاري إرسال طلبك...";
+                    console.log("جاري محاولة الاتصال بفايربيز...");
+
+                    // إضافة الطلب
+                    const docRef = await addDoc(collection(db, "orders"), {
+                        customerName: name,
+                        customerPhone: phone,
+                        customerAddress: address,
+                        items: window.cart || [],
+                        totalPrice: window.total || 0,
+                        status: "جديد",
+                        createdAt: serverTimestamp()
+                    });
+
+                    console.log("تم الإرسال بنجاح! ID:", docRef.id);
+                    alert("مبروك! طلبك وصل للأدمن.");
+                    
+                    // تصفير الصفحة
+                    window.cart = [];
+                    if(window.updateCartUI) window.updateCartUI();
+                    if(window.toggleCart) window.toggleCart();
+                    orderBtn.disabled = false;
+                    orderBtn.innerText = "تأكيد الطلب (كاش)";
+
+                } catch (error) {
+                    console.error("Firebase Error Details:", error);
+                    alert("السيرفر رفض الطلب. تأكد من إعدادات Rules في فايربيز.");
+                    orderBtn.disabled = false;
+                    orderBtn.innerText = "تأكيد الطلب (كاش)";
+                }
+            });
+        } else {
+            console.error("لم يتم العثور على زرار بالـ ID المطلوب");
+        }
+    });
+</script>
 
 </body>
 </html>
