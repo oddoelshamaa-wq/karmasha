@@ -170,8 +170,18 @@
                 <h3>إضافة وجبة جديدة للمنيو</h3>
                 <form id="add-food-form">
                     <input type="text" id="food-name" placeholder="اسم الوجبة" required>
-                    <input type="number" id="food-price" placeholder="السعر" required>
-                    <input type="text" id="food-img" placeholder="رابط صورة المنتج (URL)">
+                    <div class="prices-section">
+                        <label>الأحجام والأسعار:</label>
+                        <div id="prices-container">
+                            <!-- أول صف هيكون موجود دايماً -->
+                            <div class="price-row">
+                                <input type="text" placeholder="الحجم (مثلاً: وسط)" class="size-input">
+                                <input type="number" placeholder="السعر" class="price-input">
+                            </div>
+                        </div>
+                        <button type="button" onclick="addPriceRow()" class="btn-add-size">+ إضافة حجم آخر</button>
+                    </div>
+                    <input type="file" id="food-img-file" accept="image/*">
                     <textarea id="food-desc" placeholder="وصف الوجبة"></textarea>
                     <select id="categorySelect" required>
                         <option value="">اختر القسم</option>
@@ -219,6 +229,7 @@
       // استيراد الدوال اللي محتاجينها
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
       // بيانات مشروعك
       const firebaseConfig = {
@@ -269,9 +280,8 @@
                           </div>
                           <div class="card-footer">
                               ${order.status === "جديد"
-                                  ? `<button class="details-btn" onclick="updateOrderStatus('${orderId}', 'في المطبخ')">قبول الطلب</button>`
-                                  : `<button class="details-btn" style="background:#2e7d32; color:white;" onclick="updateOrderStatus('${orderId}', 'تم التوصيل')">تم التوصيل ✅</button>`
-                              }
+                                  ? `<button class="details-btn" onclick="moveToKitchen('${orderId}')">قبول الطلب</button>`
+                                  : `<button class="details-btn" style="background:#2e7d32; color:white;">بدأ الطهي</button>`}
                               <span class="price">${order.totalPrice} ج</span>
                           </div>
                       </div>
@@ -286,58 +296,22 @@
           });
       }
 
-      // دالة لتحديث حالة الطلب
-      window.updateOrderStatus = async function(id, newStatus) {
-          try {
-              const orderRef = doc(window.db, "orders", id);
-              await updateDoc(orderRef, { status: newStatus });
-              alert("تم تحديث حالة الطلب لـ: " + newStatus);
-          } catch (e) {
-              console.error("خطأ في التحديث:", e);
-          }
+      // دالة لنقل الطلب من "جديد" إلى "في المطبخ"
+      window.moveToKitchen = async function(id) {
+          const orderRef = doc(window.db, "orders", id);
+          await updateDoc(orderRef, { status: "في المطبخ" });
       };
 
-      function listenToOrderHistory() {
-          // كويري يجيب الطلبات اللي حالتها "تم التوصيل" فقط ومرتبة بالأحدث
-          const q = query(
-              collection(window.db, "orders"),
-              where("status", "==", "تم التوصيل"),
-              orderBy("createdAt", "desc")
-          );
-
-          onSnapshot(q, (snapshot) => {
-              const tableBody = document.getElementById('records-table-body');
-              const totalSalesSpan = document.getElementById('total-sales-amount');
-
-              tableBody.innerHTML = "";
-              let totalSales = 0;
-
-              snapshot.forEach((docSnapshot) => {
-                  const order = docSnapshot.data();
-                  const orderId = docSnapshot.id;
-                  totalSales += order.totalPrice || 0;
-
-                  const date = order.createdAt?.toDate().toLocaleString('ar-EG') || "غير محدد";
-                  const itemsNames = order.items.map(i => i.name).join('، ');
-
-                  tableBody.innerHTML += `
-                      <tr style="border-bottom: 1px solid #eee;">
-                          <td style="padding: 15px; font-weight: bold; color: #555;">#${orderId.substring(0,5)}</td>
-                          <td style="font-size: 13px; color: #888;">${date}</td>
-                          <td>${order.customerName}</td>
-                          <td style="font-size: 13px;">${itemsNames}</td>
-                          <td style="font-weight: bold;">${order.totalPrice} ج</td>
-                          <td><span style="color: white; background: #2e7d32; padding: 4px 10px; border-radius: 20px; font-size: 12px;">تم التوصيل</span></td>
-                      </tr>
-                  `;
-              });
-
-              totalSalesSpan.innerText = totalSales;
-          });
+      // دالة رفع الصورة للفايربيز ستوريج
+      async function uploadImage(file) {
+          const storage = getStorage();
+          const storageRef = ref(storage, 'products/' + file.name);
+          await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(storageRef);
+          return url; // هذا اللينك هو ما سنحفظه في Firestore
       }
 
       listenToOrders();
-      listenToOrderHistory();
     </script>
 
 <script>
@@ -393,34 +367,72 @@
 
     // Product management
     let editingIndex = null;
-    const form = document.getElementById('add-food-form');
-    const submitBtn = form.querySelector('button[type="submit"]');
+    let productBase64Image = "";
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const name = document.getElementById('food-name').value;
-        const price = document.getElementById('food-price').value;
-        const img = document.getElementById('food-img').value || 'fried-chicken.jpg'; // لو محطش رابط يحط صورة افتراضية
-        const description = document.getElementById('food-desc').value;
-        const category = document.getElementById('categorySelect').value;
+    // مراقبة اختيار الصورة وتحويلها
+    document.getElementById('food-img-file').addEventListener('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = () => productBase64Image = reader.result;
+        reader.readAsDataURL(e.target.files[0]);
+    });
 
-        const product = { name, price, img, description, category }; // ضيفنا img هنا
-        
-        let products = JSON.parse(localStorage.getItem('products')) || [];
-        
-        if (editingIndex !== null) {
-            products[editingIndex] = product;
-            editingIndex = null;
-            submitBtn.textContent = 'حفظ المنتج';
-            alert('تم تعديل المنتج بنجاح!');
-        } else {
-            products.push(product);
-            alert('تم إضافة المنتج بنجاح!');
+    // دالة لإضافة صف جديد تحت بعضه
+    function addPriceRow() {
+        const container = document.getElementById('prices-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'price-row';
+        newRow.innerHTML = `
+            <input type="text" placeholder="الحجم" class="size-input">
+            <input type="number" placeholder="السعر" class="price-input">
+            <button type="button" onclick="this.parentElement.remove()" class="btn-remove">×</button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    // دالة حفظ المنتج
+    async function saveProduct() {
+        const name = document.querySelector('input[placeholder="اسم الوجبة"]').value;
+        const desc = document.querySelector('textarea[placeholder="وصف الوجبة"]').value;
+        const category = document.querySelector('select').value;
+
+        // --- السحر هنا: تجميع البيانات من الصفوف ---
+        const rows = document.querySelectorAll('.price-row');
+        let pricesArray = [];
+
+        rows.forEach(row => {
+            const size = row.querySelector('.size-input').value;
+            const price = row.querySelector('.price-input').value;
+            if (size && price) {
+                pricesArray.push({ size: size, price: parseInt(price) });
+            }
+        });
+
+        if (pricesArray.length === 0) {
+            alert("لازم تضيف حجم وسعر واحد على الأقل!");
+            return;
         }
 
+        const newProduct = {
+            name: name,
+            description: desc,
+            category: category,
+            img: productBase64Image || 'default.jpg',
+            prices: pricesArray
+        };
+
+        // حفظ في LocalStorage
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        products.push(newProduct);
         localStorage.setItem('products', JSON.stringify(products));
-        this.reset();
-        updateProductsTable();
+
+        alert("تم حفظ المنتج بنجاح! 🔥");
+        location.reload();
+    }
+
+    // ربط زرار الحفظ بالدالة
+    document.getElementById('add-food-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveProduct();
     });
 
     function updateProductsTable() {
@@ -445,11 +457,10 @@
     function editProduct(index) {
         let products = JSON.parse(localStorage.getItem('products')) || [];
         const product = products[index];
-        document.getElementById('food-name').value = product.name;
-        document.getElementById('food-price').value = product.price;
-        document.getElementById('food-img').value = product.img;
-        document.getElementById('food-desc').value = product.description;
-        document.getElementById('categorySelect').value = product.category || '';
+        form.querySelector('input[type="text"]').value = product.name;
+        form.querySelector('input[type="number"]').value = product.price;
+        form.querySelector('textarea').value = product.description;
+        form.querySelector('#categorySelect').value = product.category || '';
         editingIndex = index;
         submitBtn.textContent = 'تحديث المنتج';
         // Switch to add section
