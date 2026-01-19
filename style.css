@@ -689,3 +689,57 @@ footer {
     border-radius: 10px;
     cursor: pointer;
 }
+
+/* تنسيقات خيارات الأحجام والأسعار */
+.price-options {
+    margin: 20px 0;
+    text-align: right;
+}
+.price-options h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.size-option {
+    transition: 0.3s;
+    border: 1px solid #eee;
+    background: #fdfdfd;
+}
+.size-option:has(input:checked) {
+    border-color: #e31e24;
+    background: #fff5f5;
+}
+
+.price-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.price-row input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.btn-add-size {
+    background: #f0f0f0;
+    border: 1px dashed #bbb;
+    padding: 8px;
+    width: 100%;
+    cursor: pointer;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.btn-remove {
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
