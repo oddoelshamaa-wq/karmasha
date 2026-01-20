@@ -743,3 +743,22 @@ footer {
     height: 25px;
     cursor: pointer;
 }
+
+/* تنسيقات السلة الجانبية */
+.cart-sidebar {
+    position: fixed;
+    top: 0;
+    left: -400px; /* مخفية برا الشاشة على الشمال */
+    width: 350px;
+    height: 100%;
+    background: white;
+    z-index: 5000;
+    transition: 0.4s ease-in-out;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+    padding: 20px;
+}
+
+/* لما نضيف كلاس open السلة تظهر */
+.cart-sidebar.open {
+    left: 0;
+}
