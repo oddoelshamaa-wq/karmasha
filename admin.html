@@ -9,6 +9,18 @@
 </head>
 <body>
 
+    <!-- شاشة تسجيل الدخول للموظفين -->
+    <div id="admin-login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#d2000a; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; color:white;">
+        <img src="5515928d-da81-433e-8bc9-245180ba6724.jpg" style="width:150px; border-radius:20px; margin-bottom:20px;">
+        <h2>تسجيل دخول الموظفين</h2>
+        <div style="background:white; padding:30px; border-radius:15px; display:flex; flex-direction:column; gap:10px; width:300px;">
+            <input type="text" id="admin-user" placeholder="اسم المستخدم" style="padding:10px; border:1px solid #ddd; border-radius:5px;">
+            <input type="password" id="admin-pass" placeholder="كلمة المرور" style="padding:10px; border:1px solid #ddd; border-radius:5px;">
+            <button onclick="handleAdminLogin()" style="background:#d2000a; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;">دخول</button>
+        </div>
+        <p id="login-error" style="color:yellow; margin-top:10px; display:none;">خطأ في البيانات!</p>
+    </div>
+
     <!-- القائمة الجانبية (Sidebar) -->
     <div class="sidebar">
         <div class="admin-logo-section">
@@ -18,18 +30,14 @@
         
         <nav class="side-nav">
             <ul>
-                <li class="active"><a href="#"><i class="fas fa-bell"></i> الطلبات الحية</a></li>
-                <li><a href="#"><i class="fas fa-chart-line"></i> السجل والإحصائيات</a></li>
-                <li><a href="#"><i class="fas fa-users"></i> شات الفريق</a></li>
-                <li><a href="#"><i class="fas fa-box"></i> إدارة المنتجات</a></li>
-                <li><a href="#"><i class="fas fa-list"></i> إدارة الأقسام</a></li>
-                <li><a href="#"><i class="fas fa-file-alt"></i> التقارير</a></li>
-                <li><a href="#"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</a></li>
-                <li><a href="#"><i class="fas fa-user-tie"></i> الموظفين</a></li>
-                <li class="badge-item">
-                    <a href="#"><i class="fas fa-comments"></i> شات العملاء</a>
-                    <span class="badge">5</span>
-                </li>
+                <li id="nav-orders" class="active"><a href="#"><i class="fas fa-bell"></i> الطلبات الحية</a></li>
+                <li id="nav-records"><a href="#"><i class="fas fa-chart-line"></i> السجل والإحصائيات</a></li>
+                <li id="nav-chat"><a href="#"><i class="fas fa-comments"></i> شات العملاء</a></li>
+                <!-- الحاجات دي للمدير فقط -->
+                <li id="nav-products" class="manager-only"><a href="#"><i class="fas fa-box"></i> إدارة المنتجات</a></li>
+                <li id="nav-categories" class="manager-only"><a href="#"><i class="fas fa-list"></i> إدارة الأقسام</a></li>
+                <li id="nav-add-product" class="manager-only"><a href="#"><i class="fas fa-plus-circle"></i> إضافة منتج جديد</a></li>
+                <li id="nav-staff" class="manager-only"><a href="#"><i class="fas fa-user-tie"></i> الموظفين</a></li>
             </ul>
         </nav>
 
@@ -132,7 +140,7 @@
                             <th>إجراءات</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="products-table-body">
                         <!-- المنتجات ستُحمل ديناميكياً -->
                     </tbody>
                 </table>
@@ -222,12 +230,136 @@
                 </div>
             </div>
         </section>
+
+        <!-- قسم إدارة الموظفين -->
+        <section id="manage-staff-section" class="admin-section">
+            <div class="table-container">
+                <h3>👥 إدارة طاقم العمل والصلاحيات</h3>
+
+                <!-- فورم إضافة موظف جديد -->
+                <div class="admin-card" style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h4>إضافة موظف جديد</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="staff-username" placeholder="اسم المستخدم (للإدمن)">
+                        <input type="password" id="staff-password" placeholder="كلمة المرور">
+                        <input type="text" id="staff-job-title" placeholder="المسمى الوظيفي (مثلاً: كاشير)">
+                    </div>
+
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                        <p style="font-weight: bold; margin-bottom: 10px;">حدد الصلاحيات المسموحة:</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <label><input type="checkbox" class="perm-check" value="orders"> الطلبات الحية</label>
+                            <label><input type="checkbox" class="perm-check" value="records"> السجل والإحصائيات</label>
+                            <label><input type="checkbox" class="perm-check" value="chat"> شات العملاء</label>
+                            <label><input type="checkbox" class="perm-check" value="products"> إدارة المنتجات</label>
+                            <label><input type="checkbox" class="perm-check" value="categories"> إدارة الأقسام</label>
+                        </div>
+                    </div>
+                    <button onclick="saveNewStaff()" class="btn-add" style="margin-top: 15px; width: 100%; padding: 12px;">حفظ الموظف الجديد</button>
+                </div>
+
+                <!-- جدول عرض الموظفين -->
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الموظف</th>
+                            <th>الوظيفة</th>
+                            <th>الصلاحيات</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staff-table-body">
+                        <!-- الموظفين هيظهروا هنا -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 
 
+      <script>
+        // بيانات الموظفين (مؤقتاً لحد ما تربطها بفايربيز)
+        const staffDatabase = [
+            { user: "admin", pass: "123", role: "مدير" },
+            { user: "order1", pass: "456", role: "متلقي" }
+        ];
+
+        window.handleAdminLogin = async function() {
+            const userInp = document.getElementById('admin-user').value.trim();
+            const passInp = document.getElementById('admin-pass').value.trim();
+
+            // 1. دخول "السوبر أدمن" (admin) - شغال دايماً حتى لو مفيش نت
+            if (userInp === "admin" && passInp === "123") {
+                document.getElementById('admin-login-overlay').style.display = 'none';
+
+                // إعطاء صلاحيات كاملة للمدير
+                const fullPerms = {
+                    orders: true, records: true, chat: true,
+                    products: true, categories: true
+                };
+                applyDynamicPermissions(fullPerms);
+
+                // تشغيل جلب البيانات بعد الدخول
+                if (typeof loadStaffList === "function") loadStaffList();
+                if (typeof loadProds === "function") loadProds();
+
+                console.log("تم الدخول بصلاحية السوبر أدمن");
+                return;
+            }
+
+            // 2. المحاولة مع السيرفر للموظفين الآخرين
+            try {
+                if (!window.db) {
+                    throw new Error("قاعدة البيانات لم تتحمل بعد");
+                }
+
+                // نستخدم window. للتأكد من الوصول للدوال
+                const q = window.query(
+                    window.collection(window.db, "staff"),
+                    window.where("username", "==", userInp),
+                    window.where("password", "==", passInp)
+                );
+
+                const querySnapshot = await window.getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const staffData = querySnapshot.docs[0].data();
+                    document.getElementById('admin-login-overlay').style.display = 'none';
+                    applyDynamicPermissions(staffData.permissions);
+                } else {
+                    alert("اسم المستخدم أو الباسورد غلط يا بطل!");
+                }
+            } catch (e) {
+                console.error("Firebase Error:", e);
+                // لو ظهر لك الخطأ ده تانى، بص على الـ Console (F12) هتلاقي رابط Index دوس عليه
+                alert("فيه مشكلة في السيرفر.. ادخل باليوزر admin حالياً");
+            }
+        };
+
+        function applyDynamicPermissions(perms) {
+            // إخفاء/إظهار العناصر بناءً على الصلاحيات المخزنة
+            if(!perms.orders) document.getElementById('nav-orders').style.display = 'none';
+            if(!perms.records) document.getElementById('nav-records').style.display = 'none';
+            if(!perms.chat) document.getElementById('nav-chat').style.display = 'none';
+            if(!perms.products) document.getElementById('nav-products').style.display = 'none';
+            if(!perms.categories) document.getElementById('nav-categories').style.display = 'none';
+
+            // إخفاء أزرار الإضافة لو ملوش صلاحية منتجات
+            if(!perms.products) {
+                document.getElementById('nav-add-product').style.display = 'none';
+                document.getElementById('nav-staff').style.display = 'none';
+            }
+        }
+
+        // تعديل دالة الخروج (Logout)
+        document.querySelector('.logout-btn').onclick = () => {
+            location.reload(); // أسهل طريقة لعمل تسجيل خروج هي إعادة تحميل الصفحة
+        };
+      </script>
+
       <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, updateDoc, deleteDoc, getDocs, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyArc3Y--aq-6e8omAbcpm8fZ5BvNcYMtkw",
@@ -242,6 +374,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         window.db = db;
+
+        // أضف هذه الأسطر لربط دوال فايربيز بالنافذة العالمية
+        window.query = query;
+        window.where = where;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.orderBy = orderBy;
 
         // تعريف صوت التنبيه (صوت جرس تنبيه)
         const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -456,6 +595,8 @@
                     document.getElementById('add-product-section').classList.add('active');
                 } else if(t.includes("الأقسام")) {
                     document.getElementById('manage-categories-section').classList.add('active');
+                } else if(t.includes("الموظفين")) {
+                    document.getElementById('manage-staff-section').classList.add('active');
                 }
             });
         });
@@ -537,6 +678,109 @@
                 row.style.display = text.includes(input) ? "" : "none";
             });
         }
+
+        // 4. إدارة الموظفين (Staff)
+        // دالة حفظ الموظف بفايربيز
+        window.saveNewStaff = async function() {
+            console.log("جاري محاولة حفظ موظف..."); // للتأكد في الـ Console إن الزرار شغال
+
+            const user = document.getElementById('staff-username').value.trim();
+            const pass = document.getElementById('staff-password').value.trim();
+            const job = document.getElementById('staff-job-title').value.trim();
+
+            // جمع الصلاحيات
+            let permissions = {};
+            document.querySelectorAll('.perm-check').forEach(check => {
+                permissions[check.value] = check.checked;
+            });
+
+            if(!user || !pass) {
+                alert("يا بطل لازم تكتب اسم المستخدم والباسورد!");
+                return;
+            }
+
+            try {
+                await addDoc(collection(window.db, "staff"), {
+                    username: user,
+                    password: pass,
+                    jobTitle: job,
+                    permissions: permissions,
+                    createdAt: serverTimestamp()
+                });
+
+                alert("مبروك! الموظف انضاف بنجاح.");
+
+                // تفريغ الخانات بعد الحفظ
+                document.getElementById('staff-username').value = "";
+                document.getElementById('staff-password').value = "";
+                document.getElementById('staff-job-title').value = "";
+
+                // إعادة تحميل الجدول فوراً
+                loadStaffList();
+
+            } catch(e) {
+                console.error("Error saving staff:", e);
+                alert("حصلت مشكلة وأحنا بنحفظ البيانات");
+            }
+        };
+
+        // دالة تحميل قائمة الموظفين
+        window.loadStaffList = async function() {
+            const tbody = document.getElementById('staff-table-body');
+            if(!tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
+
+            try {
+                const snapshot = await getDocs(collection(window.db, "staff"));
+                tbody.innerHTML = ''; // تفريغ الجدول عشان نمليه
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="4">لا يوجد موظفين حالياً</td></tr>';
+                    return;
+                }
+
+                snapshot.forEach(docSnap => {
+                    const s = docSnap.data();
+                    // تحويل الصلاحيات لنص مفهوم
+                    const permsKeys = {
+                        orders: "طلبات",
+                        records: "سجل",
+                        chat: "شات",
+                        products: "منتجات",
+                        categories: "أقسام"
+                    };
+                    const activePerms = Object.keys(s.permissions)
+                                        .filter(k => s.permissions[k])
+                                        .map(k => permsKeys[k])
+                                        .join(' - ');
+
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding:10px;"><b>${s.username}</b></td>
+                            <td>${s.jobTitle || 'موظف'}</td>
+                            <td style="font-size:12px; color:#d2000a;">${activePerms}</td>
+                            <td>
+                                <button onclick="deleteStaff('${docSnap.id}')"
+                                        style="background:#ff4d4d; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+                                    حذف
+                                </button>
+                            </td>
+                        </tr>`;
+                });
+            } catch(e) {
+                console.error("Error loading staff:", e);
+                tbody.innerHTML = '<tr><td colspan="4">خطأ في تحميل الموظفين</td></tr>';
+            }
+        };
+
+        // دالة حذف الموظف
+        window.deleteStaff = async (id) => {
+            if(confirm("هل أنت متأكد من حذف هذا الموظف؟")) {
+                await deleteDoc(doc(window.db, "staff", id));
+                loadStaffList(); // تحديث الجدول
+            }
+        };
 
     </script>
 </body>
