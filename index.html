@@ -47,8 +47,7 @@
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1 class="text-glow">KARMASHA</h1>
-            <p class="subtitle">طعم القرمشة اللي يظبط الدماغ</p>
-            <button class="btn-main bounce">استعرض المنيو <i class="fas fa-chevron-down"></i></button>
+           
         </div>
     </section>
 
@@ -165,8 +164,8 @@
     <script type="module">
       // استيراد الدوال اللي محتاجينها
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import { getFirestore, collection, addDoc, getDocs, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
       // بيانات مشروعك (اللي إنت بعتها)
       const firebaseConfig = {
@@ -187,6 +186,25 @@
       // تصدير الأدوات عشان نستخدمها في باقي الكود
       window.db = db;
       window.auth = auth;
+      window.initializeApp = initializeApp;
+      window.getFirestore = getFirestore;
+      window.collection = collection;
+      window.addDoc = addDoc;
+      window.getDocs = getDocs;
+      window.onSnapshot = onSnapshot;
+      window.doc = doc;
+      window.updateDoc = updateDoc;
+      window.deleteDoc = deleteDoc;
+      window.serverTimestamp = serverTimestamp;
+      window.query = query;
+      window.where = where;
+      window.orderBy = orderBy;
+      window.setDoc = setDoc;
+      window.getAuth = getAuth;
+      window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+      window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+      window.onAuthStateChanged = onAuthStateChanged;
+      window.signOut = signOut;
     </script>
 
     <!-- السكريبت (نفس الوظائف السابقة مع تحسين الحركة) -->
@@ -420,11 +438,15 @@
         window.cart = [];
         window.total = 0;
 
-        // فتح وقفل السلة
-        function toggleCart() {
-            document.getElementById('cart-sidebar').classList.toggle('open');
-        }
-        window.toggleCart = toggleCart;
+        // دالة فتح وقفل السلة
+        window.toggleCart = function() {
+            const cartSidebar = document.getElementById('cart-sidebar');
+            if (cartSidebar) {
+                cartSidebar.classList.toggle('open');
+            } else {
+                console.error("عنصر السلة غير موجود في الصفحة!");
+            }
+        };
 
         // إضافة منتج للسلة (استدعيها من زرار الوجبة)
         function addToCart(name, price) {
@@ -549,14 +571,13 @@
             const listContainer = document.getElementById('user-orders-list');
             const currentUser = JSON.parse(localStorage.getItem('loggedInUser'));
 
-            if (!currentUser) return;
-
-            // Set profile info
-            document.getElementById('profile-name-title').innerText = currentUser.name;
-            document.getElementById('profile-phone-detail').innerText = currentUser.phone;
+            // لو مفيش مستخدم مسجل دخول، اخرج
+            if (!currentUser || !currentUser.phone) {
+                listContainer.innerHTML = "<p>يرجى تسجيل الدخول أولاً</p>";
+                return;
+            }
 
             try {
-                // بنجيب الطلبات اللي فيها رقم موبايل العميل
                 const q = query(
                     collection(window.db, "orders"),
                     where("customerPhone", "==", currentUser.phone),
@@ -645,68 +666,21 @@
         }
     </script>
 
-    <!-- سلة المشتريات (الجانبية) -->
-    <div id="cart-sidebar" class="cart-sidebar">
-        <div class="cart-header">
-            <h3>طلباتك 🍟</h3>
-            <button onclick="toggleCart()" class="close-btn">&times;</button>
-        </div>
+<script type="module">
+        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        <!-- مكان عرض المنتجات اللي انضافت -->
-        <div id="cart-items" class="cart-items">
-            <p class="empty-msg">السلة فارغة.. اطلب دلوقتي!</p>
-        </div>
-
-        <div class="cart-footer">
-            <div class="total-price">الإجمالي: <span id="cart-total">0</span> ج.م</div>
-
-            <!-- فورم بيانات الزبون -->
-            <div class="checkout-form">
-                <h4>بيانات التوصيل</h4>
-                <input type="text" id="cust-name" placeholder="الاسم بالكامل">
-                <input type="tel" id="cust-phone" placeholder="رقم الموبايل">
-                <textarea id="cust-address" placeholder="العنوان بالتفصيل (المنطقة، الشارع، رقم الدور)"></textarea>
-                <button id="confirmOrderBtn" class="order-submit-btn">تأكيد الطلب (كاش)</button>
-            </div>
-        </div>
-    </div>
-
-    <footer>
-        <p>جميع الحقوق محفوظة لمطعم قرمشة © 2024</p>
-    </footer>
-
-<<script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, serverTimestamp, doc, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        // نفس الـ Config بتاعك
-        const firebaseConfig = {
-            apiKey: "AIzaSyArc3Y--aq-6e8omAbcpm8fZ5BvNcYMtkw",
-            authDomain: "karmasha-bfad3.firebaseapp.com",
-            projectId: "karmasha-bfad3",
-            storageBucket: "karmasha-bfad3.firebasestorage.app",
-            messagingSenderId: "584846393500",
-            appId: "1:584846393500:web:5a58f969f3a66126026d59",
-            measurementId: "G-G518D7LXSS"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        window.db = db;
         window.allProducts = []; // مخزن للمنتجات
 
         // 1. تحميل الأقسام من فايربيز (الحل الجذري)
         async function loadCategoriesFromFirebase() {
             const nav = document.getElementById('dynamicCategories');
             nav.innerHTML = '<span style="padding:10px;">جاري تحميل القائمة...</span>';
-            
+
             try {
                 // جلب الأقسام مرتبة
-                const q = query(collection(db, "categories"), orderBy("createdAt", "asc"));
-                const snapshot = await getDocs(q);
-                
+                const q = window.query(window.collection(window.db, "categories"), window.orderBy("createdAt", "asc"));
+                const snapshot = await window.getDocs(q);
+
                 nav.innerHTML = ''; // تفريغ
                 let firstCat = null;
 
@@ -720,8 +694,8 @@
                     if(!firstCat) firstCat = catName; // حفظ أول قسم عشان نفعله
 
                     nav.innerHTML += `
-                        <a href="javascript:void(0)" 
-                           onclick="selectCategory(this, '${catName}')" 
+                        <a href="javascript:void(0)"
+                           onclick="selectCategory(this, '${catName}')"
                            class="nav-item ${firstCat === catName ? 'active' : ''}">
                            ${catName}
                         </a>`;
@@ -739,12 +713,12 @@
         // 2. تحميل المنتجات
         async function loadProductsFromFirebase(defaultCat) {
             try {
-                const snapshot = await getDocs(collection(db, "products"));
+                const snapshot = await window.getDocs(window.collection(window.db, "products"));
                 window.allProducts = [];
                 snapshot.forEach(doc => {
                     window.allProducts.push(doc.data());
                 });
-                
+
                 // عرض المنتجات للقسم الافتراضي
                 if(defaultCat) {
                     renderProductsForCategory(defaultCat);
@@ -863,12 +837,12 @@
         // Auth & Chat Logic (نفس اللي فات)
         window.registerUser = async function() {
             const phone = document.getElementById('reg-email').value;
-            const email = phone + "@karmasha.com"; 
+            const email = phone + "@karmasha.com";
             const pass = document.getElementById('reg-pass').value;
             const name = document.getElementById('reg-name').value;
             try {
-                const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                await setDoc(doc(db, "users", cred.user.uid), { name: name, phone: phone });
+                const cred = await window.createUserWithEmailAndPassword(window.auth, email, pass);
+                await window.setDoc(window.doc(window.db, "users", cred.user.uid), { name: name, phone: phone });
                 alert("تم التسجيل بنجاح!"); closeAuthModal();
             } catch(e) { alert("خطأ: " + e.message); }
         }
@@ -878,14 +852,14 @@
             const email = phone.includes('@') ? phone : phone + "@karmasha.com";
             const pass = document.getElementById('login-pass').value;
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
+                await window.signInWithEmailAndPassword(window.auth, email, pass);
                 closeAuthModal();
             } catch(e) { alert("رقم الموبايل أو الباسورد غلط"); }
         }
 
-        window.logoutUser = () => signOut(auth);
+        window.logoutUser = () => window.signOut(window.auth);
 
-        onAuthStateChanged(auth, (user) => {
+        window.onAuthStateChanged(window.auth, (user) => {
             window.currentUser = user;
             if(user) {
                 document.getElementById('user-area').innerHTML = `<span style="color:white; font-size:14px; font-weight:bold">أهلاً بك <br><small onclick="window.logoutUser()" style="cursor:pointer; text-decoration:underline;">خروج</small></span>`;
@@ -894,23 +868,80 @@
             } else {
                 document.getElementById('user-area').innerHTML = `<button onclick="openAuthModal()" class="login-btn-nav">دخول</button>`;
             }
-        });
-        
-        // Order Submit
-         document.getElementById('confirmOrderBtn').onclick = async () => {
-            if(!window.cart.length) return alert("السلة فارغة!");
-            const n=document.getElementById('cust-name').value;
-            const p=document.getElementById('cust-phone').value;
-            const a=document.getElementById('cust-address').value;
-            if(!n||!p||!a) return alert("البيانات ناقصة");
-            
-            await addDoc(collection(db, "orders"), {
-                customerName:n, customerPhone:p, customerAddress:a, items:window.cart, totalPrice:window.total, status:"جديد", createdAt:serverTimestamp()
-            });
-            alert("تم الطلب!"); window.cart=[]; updateCartUI(); toggleCart();
-        }
+        }); // قفلة الـ onAuthStateChanged
 
-    </script>
+        // دالة تأكيد الطلب - توضع هنا مرة واحدة فقط
+        document.getElementById('confirmOrderBtn').onclick = async () => {
+            // التأكد إن السلة مش فاضية
+            if (!window.cart || window.cart.length === 0) {
+                return alert("السلة فارغة! اطلب أكلة حلوة الأول 🍗");
+            }
+
+            // سحب البيانات من الحقول
+            const n = document.getElementById('cust-name').value;
+            const p = document.getElementById('cust-phone').value;
+            const a = document.getElementById('cust-address').value;
+
+            // التأكد إن البيانات كاملة
+            if (!n || !p || !a) {
+                return alert("البيانات ناقصة.. كمل بياناتك عشان نجيلك بسرعة!");
+            }
+
+            try {
+                // إرسال الطلب لفايربيز
+                await addDoc(collection(db, "orders"), {
+                    customerName: n,
+                    customerPhone: p,
+                    customerAddress: a,
+                    items: window.cart,
+                    totalPrice: window.total,
+                    status: "جديد",
+                    createdAt: serverTimestamp()
+                });
+                
+                alert("تم الطلب بنجاح! طلبك بيتحضر دلوقتي 🍟");
+                window.cart = [];
+                updateCartUI();
+                toggleCart();
+            } catch (e) {
+                console.error("خطأ في الإرسال: ", e);
+                alert("عفواً حصلت مشكلة.. جرب تاني");
+            }
+        };
+
+    </script> <!-- قفلة السكريبت النهائية -->
+
+    <!-- سلة المشتريات الجانبية -->
+    <div id="cart-sidebar" class="cart-sidebar">
+        <div class="cart-header">
+            <h3>طلباتك 🍟</h3>
+            <button onclick="toggleCart()" class="close-btn">&times;</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <p class="empty-msg">السلة فارغة.. اطلب دلوقتي!</p>
+        </div>
+        <div class="cart-footer">
+            <div class="total-price">الإجمالي: <span id="cart-total">0</span> ج.م</div>
+            <div class="checkout-form">
+                <h4>بيانات التوصيل</h4>
+                <input type="text" id="cust-name" placeholder="الاسم بالكامل">
+                <input type="tel" id="cust-phone" placeholder="رقم الموبايل">
+                <textarea id="cust-address" placeholder="العنوان بالتفصيل"></textarea>
+                <button id="confirmOrderBtn" class="order-submit-btn">تأكيد الطلب</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- أيقونة السلة (تأكد أنها مكتوبة مرة واحدة فقط هنا) -->
+    <div class="cart-toggle ripple" onclick="toggleCart()">
+        <i class="fas fa-shopping-basket"></i>
+        <span id="cart-count">0</span>
+    </div>
+
+    <!-- فوتر واحد فقط شيك وبسيط -->
+    <footer style="background: #111; color: white; text-align: center; padding: 25px; margin-top: 50px; border-top: 3px solid #e31e24;">
+        <p style="margin: 0; font-family: 'Cairo', sans-serif;">جميع الحقوق محفوظة لمطعم قرمشة © 2024</p>
+    </footer>
 
 </body>
 </html>
