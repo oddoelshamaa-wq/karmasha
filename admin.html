@@ -243,28 +243,94 @@
         const db = getFirestore(app);
         window.db = db;
 
-        // 1. جلب الطلبات (Orders)
+        // تعريف صوت التنبيه (صوت جرس تنبيه)
+        const alertSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        alertSound.loop = false; // لو عاوزه يكرر الصوت خليه true
+        let isFirstLoad = true; // متغير عشان نمنع الصوت يشتغل لكل الطلبات القديمة أول ما تفتح الصفحة
+
         const qOrders = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+
         onSnapshot(qOrders, (snapshot) => {
             const newO = document.getElementById('new-orders');
             const kitO = document.getElementById('kitchen-orders');
             newO.innerHTML = ''; kitO.innerHTML = '';
+
+            // مراقبة التغييرات (لو فيه أوردر جديد انضاف)
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added" && !isFirstLoad) {
+                    const order = change.doc.data();
+                    if (order.status === "جديد") {
+                        // تشغيل الصوت
+                        alertSound.play().catch(error => {
+                            console.log("المتصفح منع الصوت.. لازم تضغط في أي مكان في الصفحة الأول عشان يشتغل.");
+                        });
+
+                        // اختياري: إشعار في المتصفح
+                        if (Notification.permission === "granted") {
+                            new Notification("قرمشة - طلب جديد!", { body: `طلب جديد من ${order.customerName}` });
+                        }
+                    }
+                }
+            });
+
             snapshot.forEach(d => {
                 const o = d.data();
-                const html = `<div class="order-card">
+                const html = `
+                <div class="order-card">
                     <div class="card-header"><span class="order-id">#${d.id.substring(0,4)}</span></div>
-                    <h4>${o.customerName}</h4><p>${o.customerPhone} | ${o.customerAddress}</p>
-                    <div style="font-size:12px;color:red;margin-top:5px">${o.items.map(i=>i.name).join(', ')}</div>
+                    <h4>${o.customerName}</h4>
+                    <p><i class="fas fa-phone"></i> ${o.customerPhone}</p>
+                    <p><i class="fas fa-map-marker-alt"></i> ${o.customerAddress}</p>
+                    <div style="font-size:13px; color:#d2000a; margin-top:8px; font-weight:bold; background:#fff1f1; padding:5px; border-radius:5px;">
+                        ${o.items.map(i => i.name).join(' + ')}
+                    </div>
                     <div class="card-footer">
-                        ${o.status=='جديد'?`<button class="details-btn" onclick="window.upStat('${d.id}','في المطبخ')">قبول</button>`:`<button class="details-btn" style="background:green" onclick="window.upStat('${d.id}','تم')">تسليم</button>`}
+                        ${o.status == 'جديد' ?
+                            `<button class="details-btn" onclick="window.upStat('${d.id}','في المطبخ')">قبول ✅</button>` :
+                            `<button class="details-btn" style="background:green; color:white;" onclick="window.upStat('${d.id}','تم')">تم التوصيل 🛵</button>`
+                        }
+
+                        <!-- زرار الإلغاء الجديد -->
+                        <button class="details-btn" style="background:#f44336; color:white; margin-right:5px;" onclick="window.askCancel('${d.id}')">إلغاء ❌</button>
+
                         <span class="price">${o.totalPrice}ج</span>
                     </div>
                 </div>`;
-                if(o.status=='جديد') newO.innerHTML+=html;
-                else if(o.status=='في المطبخ') kitO.innerHTML+=html;
+
+                if(o.status == 'جديد') newO.innerHTML += html;
+                else if(o.status == 'في المطبخ') kitO.innerHTML += html;
             });
+
+            isFirstLoad = false; // بعد أول تحميل، أي إضافة تانية هتشغل الصوت
         });
         window.upStat = async (id,s) => await updateDoc(doc(db,"orders",id),{status:s});
+
+        // دالة لإلغاء الطلب مع طلب السبب
+        window.askCancel = async (id) => {
+            const reason = prompt("يرجى إدخال سبب إلغاء الطلب (مثلاً: العميل لا يرد، المنتج غير متوفر):");
+
+            // لو الإدمن ضغط Cancel أو ساب الخانة فاضية
+            if (reason === null) return;
+            if (reason.trim() === "") {
+                alert("لازم تكتب سبب عشان تلغي الأوردر!");
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "orders", id), {
+                    status: "ملغي",
+                    cancelReason: reason // حفظ السبب في فايربيز
+                });
+                alert("تم إلغاء الطلب وتسجيل السبب.");
+            } catch (e) {
+                console.error("خطأ في الإلغاء: ", e);
+            }
+        };
+
+        // طلب إذن إشعارات الويندوز
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
 
         // 2. إدارة الأقسام (Firebase Categories - التعديل الجديد)
         // دالة لعرض الأقسام في الجدول وفي قائمة إضافة المنتج
@@ -373,16 +439,104 @@
         const secs = document.querySelectorAll('.admin-section');
         items.forEach(item => {
             item.addEventListener('click', function() {
-                items.forEach(i=>i.classList.remove('active')); this.classList.add('active');
-                secs.forEach(s=>s.classList.remove('active'));
+                items.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                secs.forEach(s => s.classList.remove('active'));
+
                 const t = this.innerText;
-                if(t.includes("الطلبات")) document.getElementById('live-orders-section').classList.add('active');
-                else if(t.includes("شات")) document.getElementById('chat-section').classList.add('active');
-                else if(t.includes("المنتجات")) document.getElementById('manage-products-section').classList.add('active');
-                else if(t.includes("إضافة")) document.getElementById('add-product-section').classList.add('active');
-                else if(t.includes("الأقسام")) document.getElementById('manage-categories-section').classList.add('active');
+                if(t.includes("الطلبات")) {
+                    document.getElementById('live-orders-section').classList.add('active');
+                } else if(t.includes("السجل")) {
+                    document.getElementById('records-section').classList.add('active');
+                    loadRecords(); // استدعاء دالة تحميل البيانات لما نفتح السجل
+                } else if(t.includes("المنتجات")) {
+                    document.getElementById('manage-products-section').classList.add('active');
+                } else if(t.includes("إضافة")) {
+                    document.getElementById('add-product-section').classList.add('active');
+                } else if(t.includes("الأقسام")) {
+                    document.getElementById('manage-categories-section').classList.add('active');
+                }
             });
         });
+
+        // دالة تحميل سجل الطلبات بالكامل
+        async function loadRecords() {
+            const tableBody = document.getElementById('records-table-body');
+            const totalSalesDisplay = document.getElementById('total-sales-amount');
+
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري تحميل السجل...</td></tr>';
+
+            try {
+                // جلب كل الطلبات من الأحدث للأقدم
+                const q = query(collection(window.db, "orders"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                tableBody.innerHTML = ''; // تفريغ الجدول
+                let totalSales = 0;
+
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    const date = order.createdAt ? order.createdAt.toDate().toLocaleString('ar-EG') : 'غير مسجل';
+
+                    // حساب الإجمالي الكلي
+                    totalSales += parseFloat(order.totalPrice || 0);
+
+                    // تحويل قائمة الوجبات لنص
+                    const itemsList = order.items.map(i => i.name).join(' + ');
+
+                    let statusDisplay = order.status;
+
+                    // لو الحالة ملغي، ضيف السبب تحت الكلمة
+                    if (order.status === "ملغي") {
+                        const reason = order.cancelReason || "غير محدد";
+                        statusDisplay = `<span style="color:#ffc107;">ملغي</span><br><small style="color:#ffeb3b; font-size:10px;">السبب: ${reason}</small>`;
+                    } else {
+                        statusDisplay = `<span style="color:white;">${order.status}</span>`;
+                    }
+
+                    tableBody.innerHTML += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px;">#${doc.id.substring(0, 5)}</td>
+                            <td>${date}</td>
+                            <td>${order.customerName} <br> <small>${order.customerPhone}</small></td>
+                            <td>${itemsList}</td>
+                            <td>${order.totalPrice} ج</td>
+                            <td>
+                                <div class="status-badge" style="background:${getStatusColor(order.status)}; padding:5px; border-radius:5px; text-align:center;">
+                                    ${statusDisplay}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                totalSalesDisplay.innerText = totalSales; // تحديث رقم إجمالي المبيعات
+
+            } catch (error) {
+                console.error("Error loading records: ", error);
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">فشل تحميل البيانات. تأكد من إعدادات الـ Index في Firebase.</td></tr>';
+            }
+        }
+
+        // دالة مساعدة لتلوين حالة الطلب
+        function getStatusColor(status) {
+            if (status === "جديد") return "#e31e24";
+            if (status === "في المطبخ") return "#1976d2";
+            if (status === "تم") return "#2e7d32";
+            if (status === "ملغي") return "#212121"; // أسود/رمادي غامق
+            return "#757575";
+        }
+
+        window.filterRecords = function() {
+            let input = document.getElementById("searchOrders").value.toLowerCase();
+            let rows = document.querySelectorAll("#records-table-body tr");
+
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
 
     </script>
 </body>
