@@ -24,24 +24,38 @@
             <img src="5515928d-da81-433e-8bc9-245180ba6724.jpg" alt="Karmasha Logo" class="site-logo floating">
         </div>
     </header>
-
-    <nav class="top-nav">
-        <div class="container">
-            <ul>
-                <li><a href="#" class="nav-link">الرئيسية</a></li>
-                <li><a href="#menu" class="nav-link">المنيو</a></li>
-                <li><a href="#" class="nav-link">الفروع</a></li>
-            </ul>
-            <div class="hotline pulse">
-                <i class="fas fa-phone-alt"></i> 19218
-            </div>
-            <div id="user-area">
-                <button onclick="openAuthModal()" class="login-btn-nav shine-btn">
-                    <i class="fas fa-user-circle"></i> دخول / تسجيل
-                </button>
-            </div>
+<!-- هيدر قرمشة الجديد - نسخة الموبايل الاحترافية -->
+<header class="new-karmasha-header">
+    <div class="header-top-line">
+        <!-- زر الدخول -->
+        <div class="h-item">
+            <button onclick="openAuthModal()" class="h-login-btn">
+                <i class="fas fa-user"></i>
+            </button>
         </div>
-    </nav>
+
+        <!-- اللوجو في النص -->
+        <div class="h-item">
+            <img src="5515928d-da81-433e-8bc9-245180ba6724.jpg" class="h-logo" alt="Karmasha">
+        </div>
+
+        <!-- زر الاتصال -->
+        <div class="h-item">
+            <a href="tel:19218" class="h-call-btn">
+                <i class="fas fa-phone-alt"></i>
+                <span>19218</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- روابط التنقل السريعة -->
+    <div class="header-links-row">
+        <a href="#" class="h-link active">الرئيسية</a>
+        <a href="#menu" class="h-link">المنيو</a>
+        <a href="#" class="h-link">الفروع</a>
+        <a href="#" class="h-link">العروض</a>
+    </div>
+</header>
 
     <section class="hero paralllax">
         <div class="hero-overlay"></div>
