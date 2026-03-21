@@ -12,6 +12,14 @@ body {
     background: #fdfdfd;
 }
 
+/* حل مشكلة العرض الزائد (Horizontal Scroll) */
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 /* --- الخدعة 1: شاشة التحميل --- */
 .loader-wrapper {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -761,4 +769,97 @@ footer {
 /* لما نضيف كلاس open السلة تظهر */
 .cart-sidebar.open {
     left: 0;
+}
+
+/* --- تعديلات الموبايل (Responsive Fixes) --- */
+@media (max-width: 768px) {
+    
+    /* 1. تصغير الهيدر ومنع التداخل */
+    .top-nav .container {
+        flex-direction: column; /* ترتيب العناصر تحت بعض */
+        gap: 10px;
+        padding: 10px 5px;
+    }
+
+    .top-nav ul {
+        gap: 10px;
+        padding: 0;
+        margin: 5px 0;
+    }
+
+    .top-nav a {
+        font-size: 13px; /* تصغير الخط قليلاً */
+    }
+
+    .hotline {
+        font-size: 18px !important; /* تصغير حجم الرقم */
+        order: -1; /* جعل الرقم في الأعلى */
+    }
+
+    /* 2. تعديل كلمة KARMASHA الكبيرة */
+    .text-glow {
+        font-size: 2.5rem; /* تصغير الكلمة عشان متخرجش بره الشاشة */
+    }
+
+    .hero {
+        height: 40vh; /* تقليل ارتفاع الصورة في الموبايل */
+    }
+
+    /* 3. شريط الأقسام (دجاج ناجتس، بطاطس...) */
+    .nav-container {
+        justify-content: flex-start; /* يبدأ من اليمين */
+        padding: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-item {
+        padding: 6px 15px;
+        font-size: 14px;
+    }
+
+    /* 4. كروت المنتجات */
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* عرض منتجين بجانب بعض بدل واحد */
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .food-details h3 {
+        font-size: 16px;
+    }
+
+    .food-image img {
+        height: 140px; /* تقليل ارتفاع الصورة في الكارت */
+    }
+
+    /* 5. المودال (النافذة اللي بتفتح) */
+    .modal-flex-container {
+        flex-direction: column; /* الصورة فوق والفورم تحت */
+        width: 95% !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-image-side {
+        display: none; /* إخفاء الجانب الأحمر في الموبايل لتوفير مساحة */
+    }
+
+    .product-details-container {
+        width: 95%;
+    }
+
+    .product-flex {
+        flex-direction: column;
+    }
+
+    /* 6. السلة الجانبية */
+    .cart-sidebar {
+        width: 100%; /* تأخذ عرض الشاشة بالكامل في الموبايل */
+        left: -100%;
+    }
+
+    /* 7. اللوجو */
+    .site-logo {
+        height: 50px; /* تصغير اللوجو في الموبايل */
+    }
 }
